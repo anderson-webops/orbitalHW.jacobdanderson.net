@@ -28,4 +28,6 @@ This is a learning visualization, not a solver for homework thresholds or the op
 
 ## Publishing boundary
 
-Only `dist/` should be served. No public deployment, DNS changes, remote repository creation, or certificate provisioning are performed by these scripts. Apply `dist/_headers` on compatible static hosts, or use the reviewed Nginx snippet in `deploy/`. Confirm the actual hostname configuration before production use. This repository has no writable remote until an owner-controlled destination is selected.
+The public source repository is [anderson-webops/orbitalHW.jacobdanderson.net](https://github.com/anderson-webops/orbitalHW.jacobdanderson.net). Source publication is separate from website deployment.
+
+Only `dist/` should be served. No public deployment, DNS changes, remote repository creation, or certificate provisioning are performed by these scripts. Apply `dist/_headers` on compatible static hosts, or use the reviewed Nginx snippet in `deploy/`. Confirm the actual hostname configuration before production use.
