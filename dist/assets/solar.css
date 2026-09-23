@@ -1,0 +1,175 @@
+
+    /* Self-contained styles. No fonts, frameworks, or network requests are needed.
+       Set data-theme="light" or data-theme="dark" on <html> to override the system theme. */
+    :root {
+      --page: #f5f6f7;
+      --surface: #ffffff;
+      --surface-soft: #f7f8fa;
+      --ink: #202b3a;
+      --muted: #586777;
+      --line: #dce2e8;
+      --grid: #e9edf1;
+      --solar: #b55113;
+      --radial: #2463b2;
+      --tangent: #08786a;
+      --control: #315b93;
+      --selected: #eaf1fb;
+      --earth-fill: #eaf0f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --page: #13191f;
+        --surface: #1b232b;
+        --surface-soft: #202a34;
+        --ink: #eef3f8;
+        --muted: #b0bdca;
+        --line: #35424f;
+        --grid: #2a3641;
+        --solar: #ffb078;
+        --radial: #86b7fc;
+        --tangent: #69caba;
+        --control: #a4c7fc;
+        --selected: #283b55;
+        --earth-fill: #283b4a;
+      }
+    }
+    :root[data-theme="dark"] {
+      --page: #13191f;
+      --surface: #1b232b;
+      --surface-soft: #202a34;
+      --ink: #eef3f8;
+      --muted: #b0bdca;
+      --line: #35424f;
+      --grid: #2a3641;
+      --solar: #ffb078;
+      --radial: #86b7fc;
+      --tangent: #69caba;
+      --control: #a4c7fc;
+      --selected: #283b55;
+      --earth-fill: #283b4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    #solar-acceleration-app { max-width: 1200px; margin: 0 auto; padding: 38px 28px 32px; }
+    #solar-acceleration-app h1, #solar-acceleration-app h2, #solar-acceleration-app p { margin: 0; }
+    #solar-acceleration-app h1 { font-size: clamp(27px, 3.4vw, 39px); line-height: 1.15; letter-spacing: -.035em; font-weight: 750; }
+    #solar-acceleration-app h2 { font-size: 18px; letter-spacing: -.02em; font-weight: 700; }
+    #solar-acceleration-app .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    #solar-acceleration-app .intro { max-width: 760px; margin-top: 12px; color: var(--muted); }
+    #solar-acceleration-app .muted { color: var(--muted); }
+    #solar-acceleration-app .small { font-size: 13px; }
+    #solar-acceleration-app .solar-text { color: var(--solar); }
+    #solar-acceleration-app .radial-text { color: var(--radial); }
+    #solar-acceleration-app .tangent-text { color: var(--tangent); }
+    #solar-acceleration-app .mono { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+    #solar-acceleration-app sub { font-size: .72em; }
+    #solar-acceleration-app button, #solar-acceleration-app input { font: inherit; color: inherit; }
+    #solar-acceleration-app button { min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 13px; background: var(--surface); cursor: pointer; }
+    #solar-acceleration-app button[aria-pressed="true"] { border-color: var(--control); background: var(--selected); color: var(--control); }
+    #solar-acceleration-app button:disabled, #solar-acceleration-app input:disabled { opacity: .5; cursor: not-allowed; }
+    #solar-acceleration-app :focus-visible { outline: 3px solid var(--control); outline-offset: 3px; }
+    @media (hover: hover) { #solar-acceleration-app button:not(:disabled):hover { border-color: var(--control); background: var(--selected); } }
+    #solar-acceleration-app .controls { margin-top: 25px; padding: 20px 22px 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    #solar-acceleration-app .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    #solar-acceleration-app .control { min-width: 0; }
+    #solar-acceleration-app .control-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #solar-acceleration-app .control-heading label { font-size: 15px; font-weight: 650; }
+    #solar-acceleration-app .number-wrap { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+    #solar-acceleration-app input[type="number"] { width: 79px; min-height: 44px; padding: 7px 6px 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-soft); font-size: 16px; }
+    #solar-acceleration-app input[type="range"] { display: block; width: 100%; min-height: 44px; margin: 5px 0 0; accent-color: var(--control); cursor: pointer; }
+    #solar-acceleration-app .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: -5px; }
+    #solar-acceleration-app .presets { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    #solar-acceleration-app .preset-caption { font-size: 13px; color: var(--muted); margin-right: 4px; }
+    #solar-acceleration-app .presets button { font-size: 13px; }
+    #solar-acceleration-app #reset { margin-left: auto; }
+    #solar-acceleration-app .feedback { min-height: 19px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    #solar-acceleration-app .views { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+    #solar-acceleration-app .view { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0; overflow: hidden; }
+    #solar-acceleration-app .view-heading { padding: 19px 21px 0; }
+    #solar-acceleration-app .step { display: inline-flex; width: 25px; height: 25px; justify-content: center; align-items: center; margin-right: 8px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; vertical-align: 2px; }
+    #solar-acceleration-app .view-heading p { margin-top: 7px; font-size: 13px; color: var(--muted); }
+    #solar-acceleration-app .diagram { display: block; width: 100%; height: auto; overflow: hidden; }
+    #solar-acceleration-app .diagram text { fill: var(--ink); font-family: inherit; font-size: 16px; }
+    #solar-acceleration-app .diagram .label { paint-order: stroke fill; stroke: var(--surface); stroke-width: 6px; stroke-linejoin: round; }
+    #solar-acceleration-app .diagram .muted-label { fill: var(--muted); font-size: 14px; }
+    #solar-acceleration-app .diagram .solar-label { fill: var(--solar); font-weight: 650; }
+    #solar-acceleration-app .diagram .radial-label { fill: var(--radial); font-weight: 650; }
+    #solar-acceleration-app .diagram .tangent-label { fill: var(--tangent); font-weight: 650; }
+    #solar-acceleration-app .diagram .frame-line { stroke: var(--line); stroke-width: 1.5; }
+    #solar-acceleration-app .view-caption { padding: 0 21px 17px; font-size: 13px; min-height: 56px; color: var(--muted); }
+    #solar-acceleration-app .legend { display: flex; gap: 10px 22px; flex-wrap: wrap; justify-content: center; margin: 15px 4px 20px; font-size: 13px; }
+    #solar-acceleration-app .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    #solar-acceleration-app .swatch { display: inline-block; width: 23px; height: 3px; border-radius: 2px; background: currentColor; }
+    #solar-acceleration-app .results { display: grid; grid-template-columns: 1.24fr 1fr 1fr; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+    #solar-acceleration-app .result { padding: 19px 21px; min-width: 0; }
+    #solar-acceleration-app .result + .result { border-left: 1px solid var(--line); }
+    #solar-acceleration-app .result-name { font-size: 13px; font-weight: 650; }
+    #solar-acceleration-app .result-value { font-size: 29px; line-height: 1.2; font-weight: 700; letter-spacing: -.03em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    #solar-acceleration-app .result-note { font-size: 13px; margin-top: 8px; color: var(--muted); }
+    #solar-acceleration-app .result-formula { font-size: 14px; margin-top: 9px; }
+    #solar-acceleration-app .readout-note { font-size: 13px; color: var(--muted); margin: 11px 2px 0; }
+    #solar-acceleration-app .explanation { margin-top: 25px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; padding-top: 23px; border-top: 1px solid var(--line); }
+    #solar-acceleration-app .explanation h2 { font-size: 17px; }
+    #solar-acceleration-app .explanation p { font-size: 14px; margin-top: 9px; }
+    #solar-acceleration-app .code { margin: 12px 0 0; padding: 15px 17px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #solar-acceleration-app .model-terms { margin-top: 12px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 12px; font-size: 13px; }
+    #solar-acceleration-app .model-terms dt { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    #solar-acceleration-app .model-terms dd { margin: 0; color: var(--muted); }
+    #solar-acceleration-app .footer { font-size: 12px; color: var(--muted); margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
+    #solar-acceleration-app .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    #solar-acceleration-app noscript p { margin-top: 15px; border: 1px solid var(--line); padding: 12px; }
+    @media (max-width: 800px) {
+      #solar-acceleration-app { padding: 25px 18px; }
+      #solar-acceleration-app .views { gap: 12px; }
+      #solar-acceleration-app .view-heading { padding: 16px 15px 0; }
+      #solar-acceleration-app .view-heading h2 { font-size: 16px; }
+      #solar-acceleration-app .view-caption { padding: 0 15px 16px; }
+      #solar-acceleration-app .result { padding: 17px 16px; }
+    }
+    @media (max-width: 650px) {
+      #solar-acceleration-app { padding: 23px 14px; }
+      #solar-acceleration-app .control-grid, #solar-acceleration-app .views, #solar-acceleration-app .explanation { grid-template-columns: 1fr; }
+      #solar-acceleration-app .control-grid { gap: 17px; }
+      #solar-acceleration-app .controls { padding: 17px 16px 12px; }
+      #solar-acceleration-app .view-heading h2 { font-size: 18px; }
+      #solar-acceleration-app .view-heading { padding: 18px 18px 0; }
+      #solar-acceleration-app .view-caption { min-height: 0; padding: 0 18px 18px; }
+      #solar-acceleration-app .preset-caption { width: 100%; margin-bottom: 2px; }
+      #solar-acceleration-app #reset { margin-left: 0; }
+      #solar-acceleration-app .results { grid-template-columns: 1fr 1fr; }
+      #solar-acceleration-app .result:first-child { grid-column: 1 / -1; }
+      #solar-acceleration-app .result:nth-child(2) { border-left: none; border-top: 1px solid var(--line); }
+      #solar-acceleration-app .result:nth-child(3) { border-top: 1px solid var(--line); }
+      #solar-acceleration-app .legend { justify-content: flex-start; margin-left: 3px; gap: 9px 15px; }
+      #solar-acceleration-app .explanation { gap: 24px; }
+    }
+    @media (max-width: 370px) {
+      #solar-acceleration-app .control-heading label { font-size: 13px; }
+      #solar-acceleration-app .control-heading { gap: 5px; }
+      #solar-acceleration-app .number-wrap { gap: 2px; }
+      #solar-acceleration-app input[type="number"] { width: 69px; }
+      #solar-acceleration-app .result { padding: 15px 12px; }
+      #solar-acceleration-app .result-value { font-size: 25px; }
+      #solar-acceleration-app .model-terms { grid-template-columns: 1fr; gap: 4px; }
+      #solar-acceleration-app .model-terms dd { margin-bottom: 8px; }
+    }
+    @media print {
+      :root { color-scheme: light; --page: #fff; --surface: #fff; --surface-soft: #f7f8fa; --ink: #202b3a; --muted: #586777; --line: #dce2e8; --grid: #e9edf1; --solar: #b55113; --radial: #2463b2; --tangent: #08786a; --earth-fill: #eaf0f6; }
+      #solar-acceleration-app { max-width: none; padding: 0; }
+      #solar-acceleration-app .controls { display: none; }
+      #solar-acceleration-app .views, #solar-acceleration-app .results { break-inside: avoid; }
+      #solar-acceleration-app .views { grid-template-columns: 1fr 1fr; }
+      #solar-acceleration-app .explanation { break-inside: avoid; }
+    }
+  
+.solar-inline-0 { margin-top:8px }
+.solar-inline-1 { margin-top:8px }
+.solar-inline-2 { font-size:13px;font-weight:600 }
+.solar-inline-3 { font-size:14px }

@@ -1,0 +1,22 @@
+{
+  "site": "orbitalHW.jacobdanderson.net",
+  "scope": "Two client-side teaching tools. No optimized homework solutions or personal submissions.",
+  "structure": "Dependency-free static build following the local Liar's Dice site convention; Vitesse Lite informs external assets, CSP and validation.",
+  "template_reference": "Vitesse Lite local revision 39e8214b382be4f308a6f5eee068c295e42749ec",
+  "inputs": [
+    "Previously created Orbital Physics and Code visualization",
+    "User-provided solar-acceleration-visualizer.html"
+  ],
+  "adaptations": [
+    "Shared navigation and layout",
+    "Externalized scripts and styles",
+    "Browser-local orbit state",
+    "Whole-degree angle transfer between tools",
+    "Earth-relative longitude labeled delta-lambda to distinguish it from the solar relative angle delta"
+  ],
+  "source_sha256": {
+    "orbit.html": "798f06231e9148daeb3e31c972de0932f368b6f662ee173b46cf9aad6857721d",
+    "solar-acceleration-visualizer.html": "8f2b49f1315fde5973ff1bb87cadf40900ed27e94f9ea2326c11ff8764ce5cea"
+  },
+  "version": "0.1.0"
+}

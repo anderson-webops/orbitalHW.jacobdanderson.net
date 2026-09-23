@@ -1,0 +1,36 @@
+:root { color-scheme: light dark; --site-bg:light-dark(#fafbf9,#141917); --site-ink:light-dark(#172822,#e8efeb); --site-muted:light-dark(#52635c,#acbdb4); --site-line:light-dark(#d8e2dc,#35453d); --site-accent:light-dark(#25684d,#a0d5b8); --site-tint:light-dark(#e8f0e9,#26392f); --site-surface:light-dark(#ffffff,#1b2420); --color-background-primary:var(--site-bg); --color-text-primary:var(--site-ink); --color-text-secondary:var(--site-muted); --background:var(--site-bg); --foreground:var(--site-ink); }
+* { box-sizing:border-box; }
+html, body { margin:0; padding:0; background:var(--site-bg); color:var(--site-ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.site-header, .site-main, .site-footer { width:min(1160px,calc(100% - 48px)); margin-inline:auto; }
+.site-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; padding:26px 0 21px; border-bottom:1px solid var(--site-line); }
+.site-brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--site-ink); }
+.site-brand img { width:38px; height:38px; }
+.site-brand strong { font-size:20px; font-weight:650; letter-spacing:-.04em; }
+.site-brand small { display:block; font-size:12px; color:var(--site-muted); letter-spacing:.02em; }
+.site-nav { display:flex; flex-wrap:wrap; gap:5px; }
+.site-nav a { display:inline-flex; min-height:44px; align-items:center; padding:10px 16px; border-radius:8px; color:var(--site-muted); font-size:14px; text-decoration:none; font-weight:550; }
+.site-nav a[aria-current="page"] { color:var(--site-accent); background:var(--site-tint); }
+.site-nav a:hover, .site-action:hover { text-decoration:underline; text-underline-offset:4px; }
+.site-intro { padding:32px 0 24px; max-width:860px; }
+.site-eyebrow { color:var(--site-accent); font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.12em; margin:0 0 9px; }
+.site-intro h1 { margin:0; font-size:clamp(28px,4.5vw,44px); font-weight:600; letter-spacing:-.04em; line-height:1.15; }
+.site-intro p:last-child { margin:12px 0 0; color:var(--site-muted); font-size:15px; line-height:1.65; }
+.site-context { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 24px; align-items:center; padding:14px 0; margin:0 0 24px; border-block:1px solid var(--site-line); }
+.site-context p { margin:0; color:var(--site-muted); font-size:13px; line-height:1.6; max-width:640px; }
+.site-action { display:inline-flex; align-items:center; min-height:44px; padding:9px 14px; border-radius:8px; border:1px solid var(--site-line); background:var(--site-surface); color:var(--site-accent); font-size:14px; font-weight:550; text-decoration:none; }
+.site-footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 20px; border-top:1px solid var(--site-line); margin-top:40px; padding:20px 0 28px; color:var(--site-muted); font-size:12px; line-height:1.6; }
+.site-footer a { color:inherit; text-underline-offset:3px; }
+.site-skip { position:absolute; left:16px; top:-80px; padding:12px 18px; background:var(--site-surface); color:var(--site-ink); z-index:10; }
+.site-skip:focus { top:12px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid var(--site-accent); outline-offset:4px; }
+#orbit-learning-lab { --font-size-base:15px; }
+#orbit-learning-lab > h2 { font-size:21px; margin-bottom:8px; }
+#orbit-learning-lab .scene text.small { font-size:12px; }
+#orbit-learning-lab .panels { gap:30px; }
+#solar-acceleration-app { max-width:none; padding:0; --page:var(--site-bg); --surface:var(--site-surface); --ink:var(--site-ink); --muted:var(--site-muted); --line:var(--site-line); }
+#solar-acceleration-app > header { display:none; }
+#solar-acceleration-app .controls { margin-top:0; }
+#solar-acceleration-app .diagram { min-height:260px; }
+@media(max-width:720px) { .site-header,.site-main,.site-footer { width:calc(100% - 32px); } .site-header { gap:16px; padding-top:18px; } .site-nav { width:100%; } .site-nav a { flex:1; justify-content:center; } .site-intro { padding:25px 0 20px; } .site-context { align-items:stretch; } .site-action { justify-content:center; } #solar-acceleration-app { padding:0; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { .site-header,.site-context,.site-footer { display:none; } .site-main { width:100%; } }

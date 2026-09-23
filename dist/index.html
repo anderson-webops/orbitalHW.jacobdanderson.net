@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive orbital physics, solar acceleration components, look angles and RK4 code learning tools.">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<title>Orbit & Code | Orbital HW</title>
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./assets/orbit-runtime.css"><link rel="stylesheet" href="./assets/orbit.css">
+<link rel="stylesheet" href="./assets/site.css">
+<script src="./assets/site.js" defer></script>
+<script src="./assets/orbit.js" defer></script>
+</head>
+<body>
+<a class="site-skip" href="#main">Skip to the visualization</a>
+<header class="site-header">
+<a class="site-brand" href="./"><img src="./assets/favicon.svg" alt="" width="38" height="38"><span><strong>Orbital HW</strong><small>Physics you can see. Code you can follow.</small></span></a>
+<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="./" aria-current="page">Orbit &amp; Code</a><a data-site-view="solar" href="./solar/" >Solar Components</a></nav>
+</header>
+<main id="main" class="site-main">
+<div class="site-intro"><p class="site-eyebrow">ECE 6390 · Interactive learning lab</p><h1>Watch the orbit. Follow the code.</h1><p>Connect orbital motion, a rotating observer, solar pressure, and the RK4 update in one teaching simulation.</p></div>
+<section class="site-context" aria-label="About this view"><p>A separate 48-hour teaching scenario, not an optimized homework solution. The solar view is a geometry close-up of the current angles.</p><a class="site-action" id="inspect-solar" href="./solar/">Inspect these angles in Solar Components</a></section>
+<div id="orbit-learning-lab">
+  
+  <h2>One orbit, four connected views</h2>
+  <div class="text-small">Based on orbit_sim_math_final.py · 48-hour teaching scenario · no optimized homework orbit · spherical Earth · equatorial motion · no eclipses or thrust</div>
+  <div class="viz-controls controls-gap">
+    <label class="form-label">Starting orbit
+      <select class="form-select" id="ol-orbit"><option value="ellipse">Teaching ellipse: initial e = 0.06</option><option value="circular">Circular GEO start</option></select>
+    </label>
+    <label class="form-label">Orbit-view reference frame
+      <select class="form-select" id="ol-frame"><option value="inertial">Space-fixed</option><option value="earth">Earth-fixed</option></select>
+    </label>
+    <label class="form-label">Areal density ρA [kg/m²]
+      <select class="form-select" id="ol-density"><option value="1">1</option><option value="2" selected>2</option><option value="5">5</option><option value="10">10</option></select>
+    </label>
+    <label class="form-label">Integration step dt [s]
+      <select class="form-select" id="ol-step"><option value="60">60</option><option value="300">300</option><option value="900">900</option></select>
+    </label>
+  </div>
+  <div class="viz-row">
+    <button class="btn btn-primary" id="ol-play" type="button">Play 48 hours</button>
+    <label class="form-check"><input class="form-check-input" id="ol-solar" type="checkbox" checked><span class="form-check-label">Solar pressure</span></label>
+    <span class="text-small">αr = 0.5 · ΩEarth: sidereal day · ΩSun: 365 days</span>
+  </div>
+  <div class="controls-gap">
+    <label class="form-label" for="ol-time"><span class="label-pair"><span>Elapsed simulation time</span><output id="ol-time-value" class="tabular-nums">6.00 h</output></span></label>
+    <input class="form-range" id="ol-time" type="range" min="0" max="48" step="0.01" value="6">
+  </div>
+  <div class="controls-gap">
+    <label class="form-label" for="ol-phase"><span class="label-pair"><span>FORCE_PHASE: initial push direction</span><output id="ol-phase-value" class="tabular-nums">40°</output></span></label>
+    <input class="form-range" id="ol-phase" type="range" min="0" max="360" step="5" value="40">
+  </div>
+  <div class="legend text-small" aria-label="Shared color legend">
+    <span><i class="orbit-inline-0"></i>Orbit / position</span>
+    <span><i class="orbit-inline-1"></i>Solar acceleration</span>
+    <span><i class="orbit-inline-2"></i>Velocity</span>
+    <span><i class="orbit-inline-3"></i>Station / line of sight</span>
+    <span><i class="orbit-inline-4"></i>Gravity</span>
+  </div>
+  <div class="panels">
+    <figure>
+      <h3>1 · Orbit and rotating observer</h3>
+      <svg class="scene" id="ol-orbit-svg" role="img" aria-label="Tilted three-dimensional orbit, Earth, Atlanta, satellite, radial vector, velocity, and line of sight"></svg>
+      <div class="readout text-small tabular-nums" id="ol-state-values"></div>
+    </figure>
+    <figure>
+      <h3>2 · Accelerations in the satellite's local axes</h3>
+      <svg class="scene" id="ol-force-svg" role="img" aria-label="Solar acceleration decomposed into radial and tangential parts; gravity points inward"></svg>
+      <div class="readout text-small tabular-nums" id="ol-force-values"></div>
+    </figure>
+    <figure>
+      <h3>3 · Elevation: the station-satellite plane</h3>
+      <svg class="scene" id="ol-elevation-svg" role="img" aria-label="True-scale Earth, station, satellite, central angle gamma, local horizon, and signed elevation"></svg>
+      <div class="readout text-small tabular-nums" id="ol-elevation-values"></div>
+    </figure>
+    <figure>
+      <h3>4 · Azimuth: looking down on the horizon</h3>
+      <svg class="scene" id="ol-azimuth-svg" role="img" aria-label="Horizontal projection of line of sight onto local north and east axes, with clockwise azimuth from north"></svg>
+      <div class="readout text-small tabular-nums" id="ol-azimuth-values"></div>
+    </figure>
+  </div>
+  <hr>
+  <h3>The same state inside update()</h3>
+  <div class="stage-list" id="ol-stages" aria-label="RK4 trial stages">
+    <button class="btn" data-stage="0" type="button" aria-pressed="true">k1 · start</button>
+    <button class="btn" data-stage="1" type="button" aria-pressed="false">k2 · midpoint</button>
+    <button class="btn" data-stage="2" type="button" aria-pressed="false">k3 · revised midpoint</button>
+    <button class="btn" data-stage="3" type="button" aria-pressed="false">k4 · trial endpoint</button>
+  </div>
+  <svg class="scene" id="ol-rk-svg" role="img" aria-label="Four Runge-Kutta trial evaluations produce a weighted candidate; endpoint validation occurs before the single state commit"></svg>
+  <div class="readout text-small tabular-nums" id="ol-derivative-values"></div>
+  <div class="readout text-small tabular-nums" id="ol-storage-values"></div>
+  <hr>
+  <h3>Code flow: searches outside, physics inside</h3>
+  <div class="text-small">Diagram only: density thresholds and optimized designs are not computed here.</div>
+  <div class="code-flow">
+    <div><button class="btn" type="button" data-lens="baseline">main() → baseline</button><div class="code-label text-small">Gravity-only GEO check</div></div>
+    <div><button class="btn" type="button" data-lens="density">density_thresholds()</button><div class="code-label text-small">Bracket density → brentq → repeated runs</div></div>
+    <div><button class="btn" type="button" data-lens="design">design_orbit()</button><div class="code-label text-small">Initial r, Vr, a → DE → Powell → repeated runs</div></div>
+  </div>
+  <div class="connector">↓</div>
+  <div class="viz-row"><button class="btn" type="button" data-lens="simulate">simulate() → new OrbitSim</button><span class="text-small">Current state: r, theta, Vr, omega, time</span></div>
+  <div class="connector">↓</div>
+  <div class="loop">
+    <div><button class="btn" type="button" data-lens="geometry">① Look angles</button><div class="code-label text-small">gamma → calcAz / adjAz · acos magnitude + isVisible sign</div></div>
+    <div><button class="btn" type="button" data-lens="metrics">② Measure / record</button><div class="code-label text-small">Unwrap → max_drift → min_elevation → rows</div></div>
+    <div><button class="btn" type="button" data-lens="rk4">③ Advance one dt</button><div class="code-label text-small">set_t → update → derivatives × 4 → RK4</div></div>
+    <div><button class="btn" type="button" data-lens="commit">④ Validate / commit</button><div class="code-label text-small">Endpoint guard → store state → time += dt</div></div>
+  </div>
+  <div class="connector text-small">↺ More time: back to ① · End: return summaries + optional arrays → plots</div>
+  <div class="selected-code text-small" id="ol-code-detail" aria-live="polite">Select a code stage to highlight its physical quantities.</div>
+  <div id="ol-status" class="sr-only" aria-live="polite"></div>
+  <div id="ol-error" class="text-destructive" role="alert" hidden></div>
+  
+</div>
+
+<noscript><p>JavaScript is needed for interactive controls. No account or network connection is required once the page is loaded.</p></noscript>
+</main>
+<footer class="site-footer"><span>orbitalHW.jacobdanderson.net · Learning tools, not assignment solutions</span><span>Runs in your browser · No analytics · <a href="./source-info.json">Source provenance</a></span></footer>
+</body>
+</html>

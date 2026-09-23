@@ -1,0 +1,16 @@
+{
+  "name": "orbitalhw.jacobdanderson.net",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.18.1 <25" },
+  "packageManager": "npm@12.0.2",
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "check": "python3 scripts/check_site.py",
+    "test": "python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:browser": "node tests/browser.test.mjs",
+    "dev": "python3 scripts/serve.py --port 4178",
+    "validate": "npm run build && npm run test && npm run check"
+  }
+}

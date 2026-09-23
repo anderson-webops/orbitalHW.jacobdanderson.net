@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive diagram showing how solar acceleration is projected onto a satellite's radial and tangential axes.">
+  <meta name="color-scheme" content="light dark">
+  <title>Solar Acceleration — Radial and Tangential Components</title>
+  <style>
+    /* Self-contained styles. No fonts, frameworks, or network requests are needed.
+       Set data-theme="light" or data-theme="dark" on <html> to override the system theme. */
+    :root {
+      --page: #f5f6f7;
+      --surface: #ffffff;
+      --surface-soft: #f7f8fa;
+      --ink: #202b3a;
+      --muted: #586777;
+      --line: #dce2e8;
+      --grid: #e9edf1;
+      --solar: #b55113;
+      --radial: #2463b2;
+      --tangent: #08786a;
+      --control: #315b93;
+      --selected: #eaf1fb;
+      --earth-fill: #eaf0f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --page: #13191f;
+        --surface: #1b232b;
+        --surface-soft: #202a34;
+        --ink: #eef3f8;
+        --muted: #b0bdca;
+        --line: #35424f;
+        --grid: #2a3641;
+        --solar: #ffb078;
+        --radial: #86b7fc;
+        --tangent: #69caba;
+        --control: #a4c7fc;
+        --selected: #283b55;
+        --earth-fill: #283b4a;
+      }
+    }
+    :root[data-theme="dark"] {
+      --page: #13191f;
+      --surface: #1b232b;
+      --surface-soft: #202a34;
+      --ink: #eef3f8;
+      --muted: #b0bdca;
+      --line: #35424f;
+      --grid: #2a3641;
+      --solar: #ffb078;
+      --radial: #86b7fc;
+      --tangent: #69caba;
+      --control: #a4c7fc;
+      --selected: #283b55;
+      --earth-fill: #283b4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    #solar-acceleration-app { max-width: 1200px; margin: 0 auto; padding: 38px 28px 32px; }
+    #solar-acceleration-app h1, #solar-acceleration-app h2, #solar-acceleration-app p { margin: 0; }
+    #solar-acceleration-app h1 { font-size: clamp(27px, 3.4vw, 39px); line-height: 1.15; letter-spacing: -.035em; font-weight: 750; }
+    #solar-acceleration-app h2 { font-size: 18px; letter-spacing: -.02em; font-weight: 700; }
+    #solar-acceleration-app .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    #solar-acceleration-app .intro { max-width: 760px; margin-top: 12px; color: var(--muted); }
+    #solar-acceleration-app .muted { color: var(--muted); }
+    #solar-acceleration-app .small { font-size: 13px; }
+    #solar-acceleration-app .solar-text { color: var(--solar); }
+    #solar-acceleration-app .radial-text { color: var(--radial); }
+    #solar-acceleration-app .tangent-text { color: var(--tangent); }
+    #solar-acceleration-app .mono { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+    #solar-acceleration-app sub { font-size: .72em; }
+    #solar-acceleration-app button, #solar-acceleration-app input { font: inherit; color: inherit; }
+    #solar-acceleration-app button { min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 13px; background: var(--surface); cursor: pointer; }
+    #solar-acceleration-app button[aria-pressed="true"] { border-color: var(--control); background: var(--selected); color: var(--control); }
+    #solar-acceleration-app button:disabled, #solar-acceleration-app input:disabled { opacity: .5; cursor: not-allowed; }
+    #solar-acceleration-app :focus-visible { outline: 3px solid var(--control); outline-offset: 3px; }
+    @media (hover: hover) { #solar-acceleration-app button:not(:disabled):hover { border-color: var(--control); background: var(--selected); } }
+    #solar-acceleration-app .controls { margin-top: 25px; padding: 20px 22px 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    #solar-acceleration-app .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    #solar-acceleration-app .control { min-width: 0; }
+    #solar-acceleration-app .control-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #solar-acceleration-app .control-heading label { font-size: 15px; font-weight: 650; }
+    #solar-acceleration-app .number-wrap { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+    #solar-acceleration-app input[type="number"] { width: 79px; min-height: 44px; padding: 7px 6px 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-soft); font-size: 16px; }
+    #solar-acceleration-app input[type="range"] { display: block; width: 100%; min-height: 44px; margin: 5px 0 0; accent-color: var(--control); cursor: pointer; }
+    #solar-acceleration-app .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: -5px; }
+    #solar-acceleration-app .presets { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    #solar-acceleration-app .preset-caption { font-size: 13px; color: var(--muted); margin-right: 4px; }
+    #solar-acceleration-app .presets button { font-size: 13px; }
+    #solar-acceleration-app #reset { margin-left: auto; }
+    #solar-acceleration-app .feedback { min-height: 19px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    #solar-acceleration-app .views { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+    #solar-acceleration-app .view { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0; overflow: hidden; }
+    #solar-acceleration-app .view-heading { padding: 19px 21px 0; }
+    #solar-acceleration-app .step { display: inline-flex; width: 25px; height: 25px; justify-content: center; align-items: center; margin-right: 8px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; vertical-align: 2px; }
+    #solar-acceleration-app .view-heading p { margin-top: 7px; font-size: 13px; color: var(--muted); }
+    #solar-acceleration-app .diagram { display: block; width: 100%; height: auto; overflow: hidden; }
+    #solar-acceleration-app .diagram text { fill: var(--ink); font-family: inherit; font-size: 16px; }
+    #solar-acceleration-app .diagram .label { paint-order: stroke fill; stroke: var(--surface); stroke-width: 6px; stroke-linejoin: round; }
+    #solar-acceleration-app .diagram .muted-label { fill: var(--muted); font-size: 14px; }
+    #solar-acceleration-app .diagram .solar-label { fill: var(--solar); font-weight: 650; }
+    #solar-acceleration-app .diagram .radial-label { fill: var(--radial); font-weight: 650; }
+    #solar-acceleration-app .diagram .tangent-label { fill: var(--tangent); font-weight: 650; }
+    #solar-acceleration-app .diagram .frame-line { stroke: var(--line); stroke-width: 1.5; }
+    #solar-acceleration-app .view-caption { padding: 0 21px 17px; font-size: 13px; min-height: 56px; color: var(--muted); }
+    #solar-acceleration-app .legend { display: flex; gap: 10px 22px; flex-wrap: wrap; justify-content: center; margin: 15px 4px 20px; font-size: 13px; }
+    #solar-acceleration-app .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    #solar-acceleration-app .swatch { display: inline-block; width: 23px; height: 3px; border-radius: 2px; background: currentColor; }
+    #solar-acceleration-app .results { display: grid; grid-template-columns: 1.24fr 1fr 1fr; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+    #solar-acceleration-app .result { padding: 19px 21px; min-width: 0; }
+    #solar-acceleration-app .result + .result { border-left: 1px solid var(--line); }
+    #solar-acceleration-app .result-name { font-size: 13px; font-weight: 650; }
+    #solar-acceleration-app .result-value { font-size: 29px; line-height: 1.2; font-weight: 700; letter-spacing: -.03em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    #solar-acceleration-app .result-note { font-size: 13px; margin-top: 8px; color: var(--muted); }
+    #solar-acceleration-app .result-formula { font-size: 14px; margin-top: 9px; }
+    #solar-acceleration-app .readout-note { font-size: 13px; color: var(--muted); margin: 11px 2px 0; }
+    #solar-acceleration-app .explanation { margin-top: 25px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; padding-top: 23px; border-top: 1px solid var(--line); }
+    #solar-acceleration-app .explanation h2 { font-size: 17px; }
+    #solar-acceleration-app .explanation p { font-size: 14px; margin-top: 9px; }
+    #solar-acceleration-app .code { margin: 12px 0 0; padding: 15px 17px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #solar-acceleration-app .model-terms { margin-top: 12px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 12px; font-size: 13px; }
+    #solar-acceleration-app .model-terms dt { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    #solar-acceleration-app .model-terms dd { margin: 0; color: var(--muted); }
+    #solar-acceleration-app .footer { font-size: 12px; color: var(--muted); margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
+    #solar-acceleration-app .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    #solar-acceleration-app noscript p { margin-top: 15px; border: 1px solid var(--line); padding: 12px; }
+    @media (max-width: 800px) {
+      #solar-acceleration-app { padding: 25px 18px; }
+      #solar-acceleration-app .views { gap: 12px; }
+      #solar-acceleration-app .view-heading { padding: 16px 15px 0; }
+      #solar-acceleration-app .view-heading h2 { font-size: 16px; }
+      #solar-acceleration-app .view-caption { padding: 0 15px 16px; }
+      #solar-acceleration-app .result { padding: 17px 16px; }
+    }
+    @media (max-width: 650px) {
+      #solar-acceleration-app { padding: 23px 14px; }
+      #solar-acceleration-app .control-grid, #solar-acceleration-app .views, #solar-acceleration-app .explanation { grid-template-columns: 1fr; }
+      #solar-acceleration-app .control-grid { gap: 17px; }
+      #solar-acceleration-app .controls { padding: 17px 16px 12px; }
+      #solar-acceleration-app .view-heading h2 { font-size: 18px; }
+      #solar-acceleration-app .view-heading { padding: 18px 18px 0; }
+      #solar-acceleration-app .view-caption { min-height: 0; padding: 0 18px 18px; }
+      #solar-acceleration-app .preset-caption { width: 100%; margin-bottom: 2px; }
+      #solar-acceleration-app #reset { margin-left: 0; }
+      #solar-acceleration-app .results { grid-template-columns: 1fr 1fr; }
+      #solar-acceleration-app .result:first-child { grid-column: 1 / -1; }
+      #solar-acceleration-app .result:nth-child(2) { border-left: none; border-top: 1px solid var(--line); }
+      #solar-acceleration-app .result:nth-child(3) { border-top: 1px solid var(--line); }
+      #solar-acceleration-app .legend { justify-content: flex-start; margin-left: 3px; gap: 9px 15px; }
+      #solar-acceleration-app .explanation { gap: 24px; }
+    }
+    @media (max-width: 370px) {
+      #solar-acceleration-app .control-heading label { font-size: 13px; }
+      #solar-acceleration-app .control-heading { gap: 5px; }
+      #solar-acceleration-app .number-wrap { gap: 2px; }
+      #solar-acceleration-app input[type="number"] { width: 69px; }
+      #solar-acceleration-app .result { padding: 15px 12px; }
+      #solar-acceleration-app .result-value { font-size: 25px; }
+      #solar-acceleration-app .model-terms { grid-template-columns: 1fr; gap: 4px; }
+      #solar-acceleration-app .model-terms dd { margin-bottom: 8px; }
+    }
+    @media print {
+      :root { color-scheme: light; --page: #fff; --surface: #fff; --surface-soft: #f7f8fa; --ink: #202b3a; --muted: #586777; --line: #dce2e8; --grid: #e9edf1; --solar: #b55113; --radial: #2463b2; --tangent: #08786a; --earth-fill: #eaf0f6; }
+      #solar-acceleration-app { max-width: none; padding: 0; }
+      #solar-acceleration-app .controls { display: none; }
+      #solar-acceleration-app .views, #solar-acceleration-app .results { break-inside: avoid; }
+      #solar-acceleration-app .views { grid-template-columns: 1fr 1fr; }
+      #solar-acceleration-app .explanation { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main id="solar-acceleration-app">
+    <header>
+      <p class="eyebrow">Interactive orbital geometry</p>
+      <h1>One acceleration. Two local components.</h1>
+      <p class="intro">The solar acceleration has one direction in the fixed plane. The satellite’s radial and tangential axes point in different directions as it moves. Change either angle to see how the projections change.</p>
+    </header>
+
+    <section class="controls" aria-label="Angle controls">
+      <div class="control-grid">
+        <div class="control">
+          <div class="control-heading">
+            <label for="theta-slider">Satellite angle <span class="radial-text">θ</span></label>
+            <div class="number-wrap">
+              <input id="theta-number" type="number" min="-180" max="180" step="1" value="35" aria-label="Satellite angle theta in degrees" aria-describedby="theta-help" disabled><span aria-hidden="true">°</span>
+            </div>
+          </div>
+          <input id="theta-slider" type="range" min="-180" max="180" step="1" value="35" aria-label="Satellite angle theta" aria-describedby="theta-help" disabled>
+          <div class="range-labels" aria-hidden="true"><span>−180°</span><span>0°</span><span>+180°</span></div>
+          <p id="theta-help" class="small muted" style="margin-top:8px">Earth → satellite, measured from fixed +x.</p>
+        </div>
+        <div class="control">
+          <div class="control-heading">
+            <label for="phi-slider">Solar acceleration direction <span class="solar-text">φ</span></label>
+            <div class="number-wrap">
+              <input id="phi-number" type="number" min="-180" max="180" step="1" value="80" aria-label="Solar acceleration direction phi in degrees" aria-describedby="phi-help" disabled><span aria-hidden="true">°</span>
+            </div>
+          </div>
+          <input id="phi-slider" type="range" min="-180" max="180" step="1" value="80" aria-label="Solar acceleration direction phi" aria-describedby="phi-help" disabled>
+          <div class="range-labels" aria-hidden="true"><span>−180°</span><span>0°</span><span>+180°</span></div>
+          <p id="phi-help" class="small muted" style="margin-top:8px">φ = FORCE_PHASE + OMEGA_SUN × time.</p>
+        </div>
+      </div>
+      <div class="presets" role="group" aria-label="Set an example relative angle">
+        <span class="preset-caption">Try a relative angle:</span>
+        <button type="button" data-relative="0" aria-pressed="false" disabled>0° · outward</button>
+        <button type="button" data-relative="90" aria-pressed="false" disabled>+90° · tangential</button>
+        <button type="button" data-relative="180" aria-pressed="false" disabled>180° · inward</button>
+        <button type="button" data-relative="-90" aria-pressed="false" disabled>−90° · tangential</button>
+        <button type="button" id="reset" disabled>Reset</button>
+      </div>
+      <p id="control-feedback" class="feedback" role="status">Interactive controls are initializing. The starting example is shown below.</p>
+    </section>
+
+    <noscript><p>JavaScript is disabled. The diagrams show the starting example: θ = 35°, φ = 80°, relative = 45°. Enable JavaScript to use the controls.</p></noscript>
+
+    <div class="views">
+      <section class="view" aria-labelledby="fixed-heading">
+        <div class="view-heading">
+          <h2 id="fixed-heading"><span class="step" aria-hidden="true">1</span>Fixed orbital plane</h2>
+          <p>Both θ and φ are measured from the same fixed +x direction.</p>
+        </div>
+        <svg id="fixed-svg" class="diagram" viewBox="0 0 560 470" role="img" aria-labelledby="fixed-title fixed-description">
+          <title id="fixed-title">Earth and satellite in the fixed orbital plane</title>
+          <desc id="fixed-description">Earth is at the center. The satellite is at 35 degrees. Its outward radial axis points at 35 degrees, its positive tangential axis at 125 degrees, and the solar acceleration at 80 degrees.</desc>
+          <defs>
+            <marker id="fixed-arrow-solar" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--solar)"/></marker>
+            <marker id="fixed-arrow-radial" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--radial)"/></marker>
+            <marker id="fixed-arrow-tangent" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--tangent)"/></marker>
+            <marker id="fixed-arrow-gray" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--muted)"/></marker>
+          </defs>
+          <circle cx="280" cy="239" r="112" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 6"/>
+          <line x1="46" y1="239" x2="518" y2="239" class="frame-line" marker-end="url(#fixed-arrow-gray)"/>
+          <line x1="280" y1="435" x2="280" y2="27" class="frame-line" marker-end="url(#fixed-arrow-gray)"/>
+          <text x="516" y="262" text-anchor="end" class="label muted-label">fixed +x</text>
+          <text x="293" y="35" class="label muted-label">+y</text>
+          <!-- This dashed parallel copy marks a direction, not an acceleration on Earth. -->
+          <line id="fixed-phi-ray" x1="280" y1="239" x2="307.78" y2="81.43" stroke="var(--solar)" stroke-width="1.8" stroke-dasharray="5 6" opacity=".72" marker-end="url(#fixed-arrow-solar)"/>
+          <path id="fixed-phi-arc" d="M354 239 A74 74 0 0 0 292.85 166.13" fill="none" stroke="var(--solar)" stroke-width="2"/>
+          <text id="fixed-phi-label" x="343.96" y="181.85" text-anchor="middle" class="label solar-label">φ</text>
+          <line id="earth-to-satellite" x1="280" y1="239" x2="371.75" y2="174.76" stroke="var(--radial)" stroke-width="2.7"/>
+          <path id="fixed-theta-arc" d="M329 239 A49 49 0 0 0 320.14 210.89" fill="none" stroke="var(--radial)" stroke-width="2.2"/>
+          <text id="fixed-theta-label" x="337.22" y="224.86" text-anchor="middle" class="label radial-label">θ</text>
+          <circle cx="280" cy="239" r="23" fill="var(--earth-fill)" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="280" y="244" text-anchor="middle" style="font-size:13px;font-weight:600">Earth</text>
+          <line id="fixed-radial-axis" x1="371.75" y1="174.76" x2="433.19" y2="131.74" stroke="var(--radial)" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#fixed-arrow-radial)"/>
+          <line id="fixed-tangent-axis" x1="371.75" y1="174.76" x2="328.73" y2="113.33" stroke="var(--tangent)" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#fixed-arrow-tangent)"/>
+          <line id="fixed-solar-vector" x1="371.75" y1="174.76" x2="390.5" y2="68.4" stroke="var(--solar)" stroke-width="3.8" marker-end="url(#fixed-arrow-solar)"/>
+          <circle id="fixed-satellite" cx="371.75" cy="174.76" r="5.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>
+          <text id="fixed-radial-label" x="450.67" y="127.5" text-anchor="middle" class="label radial-label">+r</text>
+          <text id="fixed-tangent-label" x="327.45" y="99.5" text-anchor="middle" class="label tangent-label">+θ</text>
+          <text id="fixed-solar-label" x="394.5" y="50.5" text-anchor="middle" class="label solar-label">a_solar</text>
+          <text id="fixed-satellite-label" x="387" y="198" class="label" style="font-size:14px">satellite</text>
+        </svg>
+        <p class="view-caption">The dashed orange ray is a <strong>parallel copy</strong> of the acceleration direction, drawn at Earth only to show φ. It is not another acceleration.</p>
+      </section>
+
+      <section class="view" aria-labelledby="local-heading">
+        <div class="view-heading">
+          <h2 id="local-heading"><span class="step" aria-hidden="true">2</span>Satellite’s local frame</h2>
+          <p>Rotate the view by −θ. Now outward radial is to the right.</p>
+        </div>
+        <svg id="local-svg" class="diagram" viewBox="0 0 560 470" role="img" aria-labelledby="local-title local-description">
+          <title id="local-title">Solar acceleration projected onto radial and tangential axes</title>
+          <desc id="local-description">The radial axis points right and the positive tangential axis up. The solar vector is 45 degrees from radial. Both normalized components equal 0.7071.</desc>
+          <defs>
+            <marker id="local-arrow-solar" viewBox="0 0 10 10" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--solar)"/></marker>
+            <marker id="local-arrow-radial" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--radial)"/></marker>
+            <marker id="local-arrow-tangent" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--tangent)"/></marker>
+            <marker id="local-arrow-gray" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--muted)"/></marker>
+            <marker id="relative-arrow" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--solar)"/></marker>
+          </defs>
+          <circle cx="280" cy="239" r="155" fill="none" stroke="var(--grid)" stroke-width="1.5" stroke-dasharray="4 6"/>
+          <line x1="48" y1="239" x2="515" y2="239" class="frame-line" marker-end="url(#local-arrow-gray)"/>
+          <line x1="280" y1="432" x2="280" y2="28" class="frame-line" marker-end="url(#local-arrow-gray)"/>
+          <text x="518" y="265" text-anchor="end" class="label radial-label">+ radial</text>
+          <text x="294" y="36" class="label tangent-label">+ tangential</text>
+          <text x="48" y="265" class="label muted-label">− radial</text>
+          <text x="292" y="436" class="label muted-label">− tangential</text>
+          <!-- All lengths use the SAME acceleration scale. The dashed sides
+               connect each projection to the actual solar-vector tip. -->
+          <path id="component-area" d="M280 239 L389.60 239 L389.60 129.40 L280 129.40 Z" fill="var(--surface-soft)" opacity=".7"/>
+          <line id="radial-guide" x1="389.60" y1="239" x2="389.60" y2="129.40" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <line id="tangent-guide" x1="280" y1="129.40" x2="389.60" y2="129.40" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <path id="right-angle" d="M379.60 239 L379.60 229 L389.60 229" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <line id="local-radial-component" x1="280" y1="239" x2="389.60" y2="239" stroke="var(--radial)" stroke-width="4.8" marker-end="url(#local-arrow-radial)"/>
+          <line id="local-tangent-component" x1="280" y1="239" x2="280" y2="129.40" stroke="var(--tangent)" stroke-width="4.8" marker-end="url(#local-arrow-tangent)"/>
+          <path id="relative-arc" d="M326 239 A46 46 0 0 0 312.53 206.47" fill="none" stroke="var(--solar)" stroke-width="1.8" marker-end="url(#relative-arrow)"/>
+          <line id="local-solar-vector" x1="280" y1="239" x2="389.60" y2="129.40" stroke="var(--solar)" stroke-width="3.5" marker-end="url(#local-arrow-solar)"/>
+          <circle cx="280" cy="239" r="5.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>
+          <text id="local-radial-label" x="334.8" y="267" text-anchor="middle" class="label radial-label">a_r</text>
+          <text id="local-tangent-label" x="263" y="188.2" text-anchor="end" class="label tangent-label">a_θ</text>
+          <text id="local-solar-label" x="404.5" y="108.5" text-anchor="middle" class="label solar-label">a_solar</text>
+          <text id="relative-label" x="348.37" y="214.68" text-anchor="middle" class="label solar-label">δ</text>
+          <text id="local-origin-label" x="265" y="263" text-anchor="end" class="label muted-label">satellite</text>
+        </svg>
+        <p class="view-caption">Same acceleration, different coordinates. <strong>δ = relative = φ − θ.</strong> The dashed guides meet at the solar-vector tip; the components are its two projections.</p>
+      </section>
+    </div>
+
+    <div class="legend" aria-label="Diagram legend">
+      <span class="solar-text"><i class="swatch" aria-hidden="true"></i>Solar acceleration</span>
+      <span class="radial-text"><i class="swatch" aria-hidden="true"></i>Radial direction / component</span>
+      <span class="tangent-text"><i class="swatch" aria-hidden="true"></i>Tangential direction / component</span>
+    </div>
+
+    <section class="results" aria-label="Calculated projections">
+      <div class="result">
+        <div class="result-name">Relative angle · δ</div>
+        <div id="relative-value" class="result-value">45°</div>
+        <div id="relative-arithmetic" class="result-formula mono">80° − 35° = 45°</div>
+        <div id="relative-note" class="result-note">45° counterclockwise from outward radial.</div>
+      </div>
+      <div class="result">
+        <div class="result-name radial-text">Radial fraction · a<sub>r</sub> / a<sub>solar</sub></div>
+        <div id="radial-value" class="result-value radial-text">+0.7071</div>
+        <div class="result-formula">cos(δ)</div>
+        <div id="radial-note" class="result-note">Positive: away from Earth.</div>
+      </div>
+      <div class="result">
+        <div class="result-name tangent-text">Tangential fraction · a<sub>θ</sub> / a<sub>solar</sub></div>
+        <div id="tangent-value" class="result-value tangent-text">+0.7071</div>
+        <div class="result-formula">sin(δ)</div>
+        <div id="tangent-note" class="result-note">Positive: toward increasing θ.</div>
+      </div>
+    </section>
+    <p class="readout-note">The arrow lengths use a<sub>solar</sub> = 1. Multiply each fraction by <code>self.acceleration</code> to obtain its acceleration component. The degrees here are for display; Python’s trigonometric functions use radians.</p>
+    <p id="accessible-result" class="sr-only" role="status" aria-live="polite" aria-atomic="true">Relative angle 45 degrees. Radial fraction 0.7071. Tangential fraction 0.7071.</p>
+
+    <section class="explanation" aria-label="How this relates to the code">
+      <div>
+        <h2>Why subtract θ?</h2>
+        <p>φ tells you where the acceleration points relative to fixed +x. θ tells you where <em>outward radial</em> points relative to that same +x. Their difference is the angle <strong>between the radial axis and the acceleration</strong>.</p>
+        <p>The radial projection is the adjacent component, so it uses cosine. The tangential projection is the perpendicular component, so it uses sine. The signs tell you which way along each axis the acceleration points.</p>
+        <p><strong>Try this:</strong> leave φ alone and move θ. The orange arrow keeps its fixed-plane direction, but its radial and tangential components change.</p>
+      </div>
+      <div>
+        <h2>Your code, in the same notation</h2>
+        <pre class="code"><code>phi = FORCE_PHASE + OMEGA_SUN * time
+relative = phi - theta
+
+a_r = self.acceleration * math.cos(relative)
+a_theta = self.acceleration * math.sin(relative)</code></pre>
+        <dl class="model-terms">
+          <dt>FORCE_PHASE</dt><dd>The modeled acceleration direction at time = 0.</dd>
+          <dt>OMEGA_SUN × time</dt><dd>The change in that modeled direction since time = 0.</dd>
+          <dt>theta</dt><dd>The satellite’s position angle, not its physical orientation.</dd>
+        </dl>
+      </div>
+    </section>
+    <footer class="footer">Geometry demonstration, not a trajectory simulation. The dashed circle in the left view is a position-angle guide, not a prediction of the orbit. Positive angles are counterclockwise. + tangential is the direction of increasing θ, not necessarily the direction of the satellite’s velocity.</footer>
+  </main>
+
+  <script>
+  (() => {
+    "use strict";
+    const root = document.getElementById("solar-acceleration-app");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const byId = id => root.querySelector("#" + id);
+    const initial = Object.freeze({ theta: 35, phi: 80 });
+    const state = { ...initial };
+    const center = { x: 280, y: 239 };
+    const orbitRadius = 112;
+    const accelerationScale = 155;
+    const rad = degrees => degrees * Math.PI / 180;
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const clean = n => Math.abs(n) < 1e-12 ? 0 : n;
+    const signed = n => (clean(n) > 0 ? "+" : clean(n) < 0 ? "−" : "") + Math.abs(clean(n)).toFixed(4);
+    const degreesText = n => String(clean(n)).replace("-", "−") + "°";
+    const formatOperand = n => n < 0 ? "(" + degreesText(n) + ")" : degreesText(n);
+
+    /** Equivalent angle in [-180, 180], preserving +180 for positive turns. */
+    function wrapAngle(value) {
+      const wrapped = ((value + 180) % 360 + 360) % 360 - 180;
+      return clean(wrapped === -180 && value > 0 ? 180 : wrapped);
+    }
+    /** SVG y points downward; physical positive angles are counterclockwise. */
+    function point(origin, angle, length) {
+      return { x: origin.x + length * Math.cos(rad(angle)), y: origin.y - length * Math.sin(rad(angle)) };
+    }
+    function line(id, start, end) {
+      const element = byId(id);
+      element.setAttribute("x1", start.x.toFixed(4));
+      element.setAttribute("y1", start.y.toFixed(4));
+      element.setAttribute("x2", end.x.toFixed(4));
+      element.setAttribute("y2", end.y.toFixed(4));
+    }
+    function textPosition(id, x, y, anchor = "middle") {
+      const element = byId(id);
+      element.setAttribute("x", x.toFixed(2));
+      element.setAttribute("y", y.toFixed(2));
+      element.setAttribute("text-anchor", anchor);
+    }
+    function visible(id, show) { byId(id).setAttribute("visibility", show ? "visible" : "hidden"); }
+    function arc(origin, radius, startAngle, deltaAngle) {
+      if (Math.abs(deltaAngle) < 0.001) return "";
+      const start = point(origin, startAngle, radius);
+      const end = point(origin, startAngle + deltaAngle, radius);
+      return `M${start.x} ${start.y} A${radius} ${radius} 0 ${Math.abs(deltaAngle) > 180 ? 1 : 0} ${deltaAngle >= 0 ? 0 : 1} ${end.x} ${end.y}`;
+    }
+
+    /**
+     * Nudge only the endpoint labels when their bounding boxes overlap.
+     * All arrows and projections keep their exact calculated coordinates.
+     */
+    function separateLabels(ids, margin = 7) {
+      const bounds = { left: 14, right: 546, top: 16, bottom: 450 };
+      const placed = [];
+      const offsets = [[0, 0]];
+      // Prefer nearby vertical shifts, then horizontal/diagonal alternatives.
+      for (const distance of [22, 44, 66, 88]) {
+        offsets.push([0, -distance], [0, distance], [-distance, 0], [distance, 0],
+          [-distance, -distance], [distance, -distance], [-distance, distance], [distance, distance]);
+      }
+      for (const id of ids) {
+        const element = byId(id);
+        const original = element.getBBox();
+        const originalX = Number(element.getAttribute("x"));
+        const originalY = Number(element.getAttribute("y"));
+        let best = null;
+        for (const [offsetX, offsetY] of offsets) {
+          const x = clamp(original.x + offsetX, bounds.left, bounds.right - original.width);
+          const y = clamp(original.y + offsetY, bounds.top, bounds.bottom - original.height);
+          const candidate = { x, y, width: original.width, height: original.height };
+          const dx = x - original.x, dy = y - original.y;
+          let penalty = dx * dx + dy * dy;
+          for (const other of placed) {
+            const overlapX = Math.min(x + candidate.width, other.x + other.width) - Math.max(x, other.x) + margin;
+            const overlapY = Math.min(y + candidate.height, other.y + other.height) - Math.max(y, other.y) + margin;
+            if (overlapX > 0 && overlapY > 0) penalty += 100000 + overlapX * overlapY * 100;
+          }
+          if (!best || penalty < best.penalty) best = { penalty, dx, dy, box: candidate };
+        }
+        element.setAttribute("x", (originalX + best.dx).toFixed(2));
+        element.setAttribute("y", (originalY + best.dy).toFixed(2));
+        placed.push(best.box);
+      }
+    }
+
+    function drawFixedFrame() {
+      const sat = point(center, state.theta, orbitRadius);
+      const radialEnd = point(sat, state.theta, 75);
+      const tangentEnd = point(sat, state.theta + 90, 75);
+      const solarEnd = point(sat, state.phi, 108);
+      line("earth-to-satellite", center, sat);
+      line("fixed-phi-ray", center, point(center, state.phi, 160));
+      line("fixed-radial-axis", sat, radialEnd);
+      line("fixed-tangent-axis", sat, tangentEnd);
+      line("fixed-solar-vector", sat, solarEnd);
+      byId("fixed-satellite").setAttribute("cx", sat.x);
+      byId("fixed-satellite").setAttribute("cy", sat.y);
+      byId("fixed-theta-arc").setAttribute("d", arc(center, 49, 0, state.theta));
+      byId("fixed-phi-arc").setAttribute("d", arc(center, 74, 0, state.phi));
+      const thetaLabel = point(center, state.theta / 2, 60);
+      const phiLabel = point(center, state.phi / 2, 91);
+      textPosition("fixed-theta-label", thetaLabel.x, thetaLabel.y + (state.theta >= 0 ? -2 : 13));
+      textPosition("fixed-phi-label", phiLabel.x, phiLabel.y + (state.phi >= 0 ? -2 : 13));
+      const radialLabel = point(sat, state.theta, 95);
+      const tangentLabel = point(sat, state.theta + 90, 95);
+      const solarLabel = point(sat, state.phi, 133);
+      textPosition("fixed-radial-label", radialLabel.x, radialLabel.y + 5);
+      textPosition("fixed-tangent-label", tangentLabel.x, tangentLabel.y + 5);
+      textPosition("fixed-solar-label", solarLabel.x, solarLabel.y + 5);
+      // The satellite label sits to one side of the inward radial segment.
+      const satelliteLabel = point(sat, state.theta - 67, 28);
+      textPosition("fixed-satellite-label", satelliteLabel.x, satelliteLabel.y + 5, "start");
+      separateLabels(["fixed-solar-label", "fixed-radial-label", "fixed-tangent-label", "fixed-satellite-label", "fixed-theta-label", "fixed-phi-label"]);
+      byId("fixed-description").textContent = `Satellite angle ${state.theta} degrees. Solar acceleration direction ${state.phi} degrees from fixed positive x. The outward radial direction follows the Earth-to-satellite line. Positive tangential is 90 degrees counterclockwise from radial. The dashed orange ray is a parallel direction reference, not another acceleration.`;
+    }
+
+    function drawLocalFrame(relative, ar, at) {
+      // Shared scale is essential: R + T = A exactly, before display rounding.
+      const R = { x: center.x + accelerationScale * ar, y: center.y };
+      const T = { x: center.x, y: center.y - accelerationScale * at };
+      const A = { x: R.x, y: T.y };
+      line("local-radial-component", center, R);
+      line("local-tangent-component", center, T);
+      line("local-solar-vector", center, A);
+      line("radial-guide", R, A);
+      line("tangent-guide", T, A);
+      byId("component-area").setAttribute("d", `M${center.x} ${center.y} L${R.x} ${R.y} L${A.x} ${A.y} L${T.x} ${T.y} Z`);
+      visible("local-radial-component", Math.abs(ar) > 1e-10);
+      visible("local-tangent-component", Math.abs(at) > 1e-10);
+      const hasTriangle = Math.abs(ar) > .08 && Math.abs(at) > .08;
+      visible("radial-guide", Math.abs(ar * at) > 1e-10);
+      visible("tangent-guide", Math.abs(ar * at) > 1e-10);
+      visible("right-angle", hasTriangle);
+      const sx = Math.sign(ar) || 1, sy = -(Math.sign(at) || 1);
+      byId("right-angle").setAttribute("d", `M${R.x - sx * 10} ${R.y} L${R.x - sx * 10} ${R.y + sy * 10} L${R.x} ${R.y + sy * 10}`);
+      byId("relative-arc").setAttribute("d", arc(center, 46, 0, relative));
+      const relativeLabel = point(center, relative / 2, 72);
+      byId("relative-label").textContent = relative === 0 ? "δ = 0°" : "δ";
+      textPosition("relative-label", relativeLabel.x, relativeLabel.y + (relative === 0 ? -14 : 5));
+
+      // Keep component labels on the side opposite their projection rectangle.
+      const radialLabelX = Math.abs(ar) < .26 ? center.x + sx * 52 : (center.x + R.x) / 2;
+      const tangentLabelY = Math.abs(at) < .26 ? center.y + sy * 53 : (center.y + T.y) / 2;
+      byId("local-radial-label").textContent = Math.abs(ar) < 1e-10 ? "a_r = 0" : "a_r";
+      byId("local-tangent-label").textContent = Math.abs(at) < 1e-10 ? "a_θ = 0" : "a_θ";
+      textPosition("local-radial-label", radialLabelX, center.y + (at >= 0 ? 28 : -18));
+      textPosition("local-tangent-label", center.x + (ar >= 0 ? -19 : 19), tangentLabelY + 5, ar >= 0 ? "end" : "start");
+      const solarLabel = point(center, relative, 181);
+      textPosition("local-solar-label", solarLabel.x, solarLabel.y + 5);
+      const originLabelX = center.x + (ar >= 0 ? -14 : 14);
+      const originLabelY = center.y + (at >= 0 ? 25 : -15);
+      textPosition("local-origin-label", originLabelX, originLabelY, ar >= 0 ? "end" : "start");
+      separateLabels(["local-solar-label", "local-radial-label", "local-tangent-label", "local-origin-label", "relative-label"]);
+      byId("local-description").textContent = `The same vector in satellite-centered coordinates, rotated by minus theta. Relative angle ${relative} degrees. Normalized radial component ${signed(ar)}. Normalized tangential component ${signed(at)}. Dashed perpendicular guides join the component endpoints to the solar vector tip.`;
+    }
+
+    function render() {
+      const raw = state.phi - state.theta;
+      const relative = wrapAngle(raw);
+      const ar = clean(Math.cos(rad(raw)));
+      const at = clean(Math.sin(rad(raw)));
+      for (const key of ["theta", "phi"]) {
+        byId(key + "-slider").value = state[key];
+        byId(key + "-number").value = state[key];
+        byId(key + "-slider").setAttribute("aria-valuetext", state[key] + " degrees");
+      }
+      byId("relative-value").textContent = degreesText(relative);
+      byId("relative-arithmetic").textContent = `${degreesText(state.phi)} − ${formatOperand(state.theta)} = ${degreesText(raw)}`;
+      let relativeNote = relative === 0 ? "Exactly aligned with outward radial."
+        : Math.abs(relative) === 180 ? "Exactly opposite outward radial."
+        : `${Math.abs(relative)}° ${relative > 0 ? "counterclockwise" : "clockwise"} from outward radial.`;
+      if (raw !== relative) relativeNote = `${degreesText(raw)} is equivalent to ${degreesText(relative)}. ` + relativeNote;
+      byId("relative-note").textContent = relativeNote;
+      byId("radial-value").textContent = signed(ar);
+      byId("tangent-value").textContent = signed(at);
+      byId("radial-note").textContent = ar > 0 ? "Positive: away from Earth." : ar < 0 ? "Negative: toward Earth." : "No radial component.";
+      byId("tangent-note").textContent = at > 0 ? "Positive: toward increasing θ." : at < 0 ? "Negative: toward decreasing θ." : "No tangential component.";
+      root.querySelectorAll("[data-relative]").forEach(button => {
+        const difference = wrapAngle(relative - Number(button.dataset.relative));
+        button.setAttribute("aria-pressed", String(Math.abs(difference) < 1e-9));
+      });
+      drawFixedFrame();
+      drawLocalFrame(relative, ar, at);
+      byId("accessible-result").textContent = `Relative angle ${relative} degrees. Radial fraction ${signed(ar)}. Tangential fraction ${signed(at)}.`;
+    }
+
+    function setAngle(key, rawValue) {
+      const parsed = String(rawValue).trim() === "" ? NaN : Number(rawValue);
+      if (!Number.isFinite(parsed)) {
+        byId(key + "-number").value = state[key];
+        byId("control-feedback").textContent = "Enter an angle between −180° and 180°. The previous value has been kept.";
+        return;
+      }
+      const angle = clamp(Math.round(parsed), -180, 180);
+      state[key] = angle;
+      byId("control-feedback").textContent = parsed !== angle
+        ? `The angle was adjusted to ${degreesText(angle)}. Controls use whole degrees from −180° to 180°.`
+        : "Presets keep θ fixed and change the acceleration direction φ.";
+      render();
+    }
+
+    for (const key of ["theta", "phi"]) {
+      const slider = byId(key + "-slider");
+      const number = byId(key + "-number");
+      slider.addEventListener("input", () => setAngle(key, slider.value));
+      number.addEventListener("change", () => setAngle(key, number.value));
+      number.addEventListener("keydown", event => {
+        if (event.key === "Enter") { event.preventDefault(); setAngle(key, number.value); }
+      });
+    }
+    root.querySelectorAll("[data-relative]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.phi = wrapAngle(state.theta + Number(button.dataset.relative));
+        byId("control-feedback").textContent = "θ stayed fixed. φ was changed to set the chosen relative angle.";
+        render();
+      });
+    });
+    byId("reset").addEventListener("click", () => {
+      Object.assign(state, initial);
+      byId("control-feedback").textContent = "Reset to θ = 35° and φ = 80°. Relative angle = 45°.";
+      render();
+    });
+
+    // Render before enabling controls. Without JavaScript the SVG starting frame remains useful.
+    render();
+    root.querySelectorAll("input, button").forEach(control => { control.disabled = false; });
+    byId("control-feedback").textContent = "Presets keep θ fixed and change the acceleration direction φ.";
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive orbital physics, solar acceleration components, look angles and RK4 code learning tools.">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<title>Solar Components | Orbital HW</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/solar.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/solar.js" defer></script>
+</head>
+<body>
+<a class="site-skip" href="#main">Skip to the visualization</a>
+<header class="site-header">
+<a class="site-brand" href="../"><img src="../assets/favicon.svg" alt="" width="38" height="38"><span><strong>Orbital HW</strong><small>Physics you can see. Code you can follow.</small></span></a>
+<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="../" >Orbit &amp; Code</a><a data-site-view="solar" href="../solar/" aria-current="page">Solar Components</a></nav>
+</header>
+<main id="main" class="site-main">
+<div class="site-intro"><p class="site-eyebrow">ECE 6390 · Interactive learning lab</p><h1>One acceleration. Two local components.</h1><p>Keep the physical vector fixed, rotate the satellite’s local axes, and see why the code uses cosine and sine.</p></div>
+<section class="site-context" aria-label="About this view"><p id="solar-import-status">Independent geometry demonstration. Use the angle controls or return to the orbit to import a moment.</p><a class="site-action" href="../">Back to Orbit &amp; Code</a></section>
+
+  <div id="solar-acceleration-app">
+    <header>
+      <p class="eyebrow">Interactive orbital geometry</p>
+      <h1>One acceleration. Two local components.</h1>
+      <p class="intro">The solar acceleration has one direction in the fixed plane. The satellite’s radial and tangential axes point in different directions as it moves. Change either angle to see how the projections change.</p>
+    </header>
+
+    <section class="controls" aria-label="Angle controls">
+      <div class="control-grid">
+        <div class="control">
+          <div class="control-heading">
+            <label for="theta-slider">Satellite angle <span class="radial-text">θ</span></label>
+            <div class="number-wrap">
+              <input id="theta-number" type="number" min="-180" max="180" step="1" value="35" aria-label="Satellite angle theta in degrees" aria-describedby="theta-help" disabled><span aria-hidden="true">°</span>
+            </div>
+          </div>
+          <input id="theta-slider" type="range" min="-180" max="180" step="1" value="35" aria-label="Satellite angle theta" aria-describedby="theta-help" disabled>
+          <div class="range-labels" aria-hidden="true"><span>−180°</span><span>0°</span><span>+180°</span></div>
+          <p id="theta-help" class="small muted solar-inline-0">Earth → satellite, measured from fixed +x.</p>
+        </div>
+        <div class="control">
+          <div class="control-heading">
+            <label for="phi-slider">Solar acceleration direction <span class="solar-text">φ</span></label>
+            <div class="number-wrap">
+              <input id="phi-number" type="number" min="-180" max="180" step="1" value="80" aria-label="Solar acceleration direction phi in degrees" aria-describedby="phi-help" disabled><span aria-hidden="true">°</span>
+            </div>
+          </div>
+          <input id="phi-slider" type="range" min="-180" max="180" step="1" value="80" aria-label="Solar acceleration direction phi" aria-describedby="phi-help" disabled>
+          <div class="range-labels" aria-hidden="true"><span>−180°</span><span>0°</span><span>+180°</span></div>
+          <p id="phi-help" class="small muted solar-inline-1">φ = FORCE_PHASE + OMEGA_SUN × time.</p>
+        </div>
+      </div>
+      <div class="presets" role="group" aria-label="Set an example relative angle">
+        <span class="preset-caption">Try a relative angle:</span>
+        <button type="button" data-relative="0" aria-pressed="false" disabled>0° · outward</button>
+        <button type="button" data-relative="90" aria-pressed="false" disabled>+90° · tangential</button>
+        <button type="button" data-relative="180" aria-pressed="false" disabled>180° · inward</button>
+        <button type="button" data-relative="-90" aria-pressed="false" disabled>−90° · tangential</button>
+        <button type="button" id="reset" disabled>Reset</button>
+      </div>
+      <p id="control-feedback" class="feedback" role="status">Interactive controls are initializing. The starting example is shown below.</p>
+    </section>
+
+    <noscript><p>JavaScript is disabled. The diagrams show the starting example: θ = 35°, φ = 80°, relative = 45°. Enable JavaScript to use the controls.</p></noscript>
+
+    <div class="views">
+      <section class="view" aria-labelledby="fixed-heading">
+        <div class="view-heading">
+          <h2 id="fixed-heading"><span class="step" aria-hidden="true">1</span>Fixed orbital plane</h2>
+          <p>Both θ and φ are measured from the same fixed +x direction.</p>
+        </div>
+        <svg id="fixed-svg" class="diagram" viewBox="0 0 560 470" role="img" aria-labelledby="fixed-title fixed-description">
+          <title id="fixed-title">Earth and satellite in the fixed orbital plane</title>
+          <desc id="fixed-description">Earth is at the center. The satellite is at 35 degrees. Its outward radial axis points at 35 degrees, its positive tangential axis at 125 degrees, and the solar acceleration at 80 degrees.</desc>
+          <defs>
+            <marker id="fixed-arrow-solar" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--solar)"/></marker>
+            <marker id="fixed-arrow-radial" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--radial)"/></marker>
+            <marker id="fixed-arrow-tangent" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--tangent)"/></marker>
+            <marker id="fixed-arrow-gray" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--muted)"/></marker>
+          </defs>
+          <circle cx="280" cy="239" r="112" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 6"/>
+          <line x1="46" y1="239" x2="518" y2="239" class="frame-line" marker-end="url(#fixed-arrow-gray)"/>
+          <line x1="280" y1="435" x2="280" y2="27" class="frame-line" marker-end="url(#fixed-arrow-gray)"/>
+          <text x="516" y="262" text-anchor="end" class="label muted-label">fixed +x</text>
+          <text x="293" y="35" class="label muted-label">+y</text>
+          <!-- This dashed parallel copy marks a direction, not an acceleration on Earth. -->
+          <line id="fixed-phi-ray" x1="280" y1="239" x2="307.78" y2="81.43" stroke="var(--solar)" stroke-width="1.8" stroke-dasharray="5 6" opacity=".72" marker-end="url(#fixed-arrow-solar)"/>
+          <path id="fixed-phi-arc" d="M354 239 A74 74 0 0 0 292.85 166.13" fill="none" stroke="var(--solar)" stroke-width="2"/>
+          <text id="fixed-phi-label" x="343.96" y="181.85" text-anchor="middle" class="label solar-label">φ</text>
+          <line id="earth-to-satellite" x1="280" y1="239" x2="371.75" y2="174.76" stroke="var(--radial)" stroke-width="2.7"/>
+          <path id="fixed-theta-arc" d="M329 239 A49 49 0 0 0 320.14 210.89" fill="none" stroke="var(--radial)" stroke-width="2.2"/>
+          <text id="fixed-theta-label" x="337.22" y="224.86" text-anchor="middle" class="label radial-label">θ</text>
+          <circle cx="280" cy="239" r="23" fill="var(--earth-fill)" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="280" y="244" text-anchor="middle" class="solar-inline-2">Earth</text>
+          <line id="fixed-radial-axis" x1="371.75" y1="174.76" x2="433.19" y2="131.74" stroke="var(--radial)" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#fixed-arrow-radial)"/>
+          <line id="fixed-tangent-axis" x1="371.75" y1="174.76" x2="328.73" y2="113.33" stroke="var(--tangent)" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#fixed-arrow-tangent)"/>
+          <line id="fixed-solar-vector" x1="371.75" y1="174.76" x2="390.5" y2="68.4" stroke="var(--solar)" stroke-width="3.8" marker-end="url(#fixed-arrow-solar)"/>
+          <circle id="fixed-satellite" cx="371.75" cy="174.76" r="5.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>
+          <text id="fixed-radial-label" x="450.67" y="127.5" text-anchor="middle" class="label radial-label">+r</text>
+          <text id="fixed-tangent-label" x="327.45" y="99.5" text-anchor="middle" class="label tangent-label">+θ</text>
+          <text id="fixed-solar-label" x="394.5" y="50.5" text-anchor="middle" class="label solar-label">a_solar</text>
+          <text id="fixed-satellite-label" x="387" y="198" class="label solar-inline-3">satellite</text>
+        </svg>
+        <p class="view-caption">The dashed orange ray is a <strong>parallel copy</strong> of the acceleration direction, drawn at Earth only to show φ. It is not another acceleration.</p>
+      </section>
+
+      <section class="view" aria-labelledby="local-heading">
+        <div class="view-heading">
+          <h2 id="local-heading"><span class="step" aria-hidden="true">2</span>Satellite’s local frame</h2>
+          <p>Rotate the view by −θ. Now outward radial is to the right.</p>
+        </div>
+        <svg id="local-svg" class="diagram" viewBox="0 0 560 470" role="img" aria-labelledby="local-title local-description">
+          <title id="local-title">Solar acceleration projected onto radial and tangential axes</title>
+          <desc id="local-description">The radial axis points right and the positive tangential axis up. The solar vector is 45 degrees from radial. Both normalized components equal 0.7071.</desc>
+          <defs>
+            <marker id="local-arrow-solar" viewBox="0 0 10 10" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--solar)"/></marker>
+            <marker id="local-arrow-radial" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--radial)"/></marker>
+            <marker id="local-arrow-tangent" viewBox="0 0 10 10" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L10 5L0 10Z" fill="var(--tangent)"/></marker>
+            <marker id="local-arrow-gray" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--muted)"/></marker>
+            <marker id="relative-arrow" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="var(--solar)"/></marker>
+          </defs>
+          <circle cx="280" cy="239" r="155" fill="none" stroke="var(--grid)" stroke-width="1.5" stroke-dasharray="4 6"/>
+          <line x1="48" y1="239" x2="515" y2="239" class="frame-line" marker-end="url(#local-arrow-gray)"/>
+          <line x1="280" y1="432" x2="280" y2="28" class="frame-line" marker-end="url(#local-arrow-gray)"/>
+          <text x="518" y="265" text-anchor="end" class="label radial-label">+ radial</text>
+          <text x="294" y="36" class="label tangent-label">+ tangential</text>
+          <text x="48" y="265" class="label muted-label">− radial</text>
+          <text x="292" y="436" class="label muted-label">− tangential</text>
+          <!-- All lengths use the SAME acceleration scale. The dashed sides
+               connect each projection to the actual solar-vector tip. -->
+          <path id="component-area" d="M280 239 L389.60 239 L389.60 129.40 L280 129.40 Z" fill="var(--surface-soft)" opacity=".7"/>
+          <line id="radial-guide" x1="389.60" y1="239" x2="389.60" y2="129.40" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <line id="tangent-guide" x1="280" y1="129.40" x2="389.60" y2="129.40" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <path id="right-angle" d="M379.60 239 L379.60 229 L389.60 229" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <line id="local-radial-component" x1="280" y1="239" x2="389.60" y2="239" stroke="var(--radial)" stroke-width="4.8" marker-end="url(#local-arrow-radial)"/>
+          <line id="local-tangent-component" x1="280" y1="239" x2="280" y2="129.40" stroke="var(--tangent)" stroke-width="4.8" marker-end="url(#local-arrow-tangent)"/>
+          <path id="relative-arc" d="M326 239 A46 46 0 0 0 312.53 206.47" fill="none" stroke="var(--solar)" stroke-width="1.8" marker-end="url(#relative-arrow)"/>
+          <line id="local-solar-vector" x1="280" y1="239" x2="389.60" y2="129.40" stroke="var(--solar)" stroke-width="3.5" marker-end="url(#local-arrow-solar)"/>
+          <circle cx="280" cy="239" r="5.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>
+          <text id="local-radial-label" x="334.8" y="267" text-anchor="middle" class="label radial-label">a_r</text>
+          <text id="local-tangent-label" x="263" y="188.2" text-anchor="end" class="label tangent-label">a_θ</text>
+          <text id="local-solar-label" x="404.5" y="108.5" text-anchor="middle" class="label solar-label">a_solar</text>
+          <text id="relative-label" x="348.37" y="214.68" text-anchor="middle" class="label solar-label">δ</text>
+          <text id="local-origin-label" x="265" y="263" text-anchor="end" class="label muted-label">satellite</text>
+        </svg>
+        <p class="view-caption">Same acceleration, different coordinates. <strong>δ = relative = φ − θ.</strong> The dashed guides meet at the solar-vector tip; the components are its two projections.</p>
+      </section>
+    </div>
+
+    <div class="legend" aria-label="Diagram legend">
+      <span class="solar-text"><i class="swatch" aria-hidden="true"></i>Solar acceleration</span>
+      <span class="radial-text"><i class="swatch" aria-hidden="true"></i>Radial direction / component</span>
+      <span class="tangent-text"><i class="swatch" aria-hidden="true"></i>Tangential direction / component</span>
+    </div>
+
+    <section class="results" aria-label="Calculated projections">
+      <div class="result">
+        <div class="result-name">Relative angle · δ</div>
+        <div id="relative-value" class="result-value">45°</div>
+        <div id="relative-arithmetic" class="result-formula mono">80° − 35° = 45°</div>
+        <div id="relative-note" class="result-note">45° counterclockwise from outward radial.</div>
+      </div>
+      <div class="result">
+        <div class="result-name radial-text">Radial fraction · a<sub>r</sub> / a<sub>solar</sub></div>
+        <div id="radial-value" class="result-value radial-text">+0.7071</div>
+        <div class="result-formula">cos(δ)</div>
+        <div id="radial-note" class="result-note">Positive: away from Earth.</div>
+      </div>
+      <div class="result">
+        <div class="result-name tangent-text">Tangential fraction · a<sub>θ</sub> / a<sub>solar</sub></div>
+        <div id="tangent-value" class="result-value tangent-text">+0.7071</div>
+        <div class="result-formula">sin(δ)</div>
+        <div id="tangent-note" class="result-note">Positive: toward increasing θ.</div>
+      </div>
+    </section>
+    <p class="readout-note">The arrow lengths use a<sub>solar</sub> = 1. Multiply each fraction by <code>self.acceleration</code> to obtain its acceleration component. The degrees here are for display; Python’s trigonometric functions use radians.</p>
+    <p id="accessible-result" class="sr-only" role="status" aria-live="polite" aria-atomic="true">Relative angle 45 degrees. Radial fraction 0.7071. Tangential fraction 0.7071.</p>
+
+    <section class="explanation" aria-label="How this relates to the code">
+      <div>
+        <h2>Why subtract θ?</h2>
+        <p>φ tells you where the acceleration points relative to fixed +x. θ tells you where <em>outward radial</em> points relative to that same +x. Their difference is the angle <strong>between the radial axis and the acceleration</strong>.</p>
+        <p>The radial projection is the adjacent component, so it uses cosine. The tangential projection is the perpendicular component, so it uses sine. The signs tell you which way along each axis the acceleration points.</p>
+        <p><strong>Try this:</strong> leave φ alone and move θ. The orange arrow keeps its fixed-plane direction, but its radial and tangential components change.</p>
+      </div>
+      <div>
+        <h2>Your code, in the same notation</h2>
+        <pre class="code"><code>phi = FORCE_PHASE + OMEGA_SUN * time
+relative = phi - theta
+
+a_r = self.acceleration * math.cos(relative)
+a_theta = self.acceleration * math.sin(relative)</code></pre>
+        <dl class="model-terms">
+          <dt>FORCE_PHASE</dt><dd>The modeled acceleration direction at time = 0.</dd>
+          <dt>OMEGA_SUN × time</dt><dd>The change in that modeled direction since time = 0.</dd>
+          <dt>theta</dt><dd>The satellite’s position angle, not its physical orientation.</dd>
+        </dl>
+      </div>
+    </section>
+    <footer class="footer">Geometry demonstration, not a trajectory simulation. The dashed circle in the left view is a position-angle guide, not a prediction of the orbit. Positive angles are counterclockwise. + tangential is the direction of increasing θ, not necessarily the direction of the satellite’s velocity.</footer>
+  </div>
+
+  
+
+<noscript><p>JavaScript is needed for interactive controls. No account or network connection is required once the page is loaded.</p></noscript>
+</main>
+<footer class="site-footer"><span>orbitalHW.jacobdanderson.net · Learning tools, not assignment solutions</span><span>Runs in your browser · No analytics · <a href="../source-info.json">Source provenance</a></span></footer>
+</body>
+</html>

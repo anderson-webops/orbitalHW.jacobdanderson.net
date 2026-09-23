@@ -1,0 +1,34 @@
+
+    #orbit-learning-lab { color:var(--foreground); }
+    #orbit-learning-lab .panels { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+    #orbit-learning-lab figure { margin:0; min-width:0; }
+    #orbit-learning-lab .scene { display:block; width:100%; overflow:visible; }
+    #orbit-learning-lab .scene text { fill:var(--foreground); font-family:inherit; }
+    #orbit-learning-lab .scene .small { font-size:var(--font-size-small); }
+    #orbit-learning-lab .readout { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:8px; }
+    #orbit-learning-lab .readout span { white-space:normal; }
+    #orbit-learning-lab .legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin:12px 0; }
+    #orbit-learning-lab .legend i { display:inline-block; width:20px; height:3px; vertical-align:middle; margin-right:6px; }
+    #orbit-learning-lab .code-flow { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px 22px; margin:12px 0; }
+    #orbit-learning-lab .code-flow > div { min-width:0; }
+    #orbit-learning-lab .code-label { margin-top:4px; overflow-wrap:anywhere; }
+    #orbit-learning-lab .connector { text-align:center; padding:2px; color:var(--foreground); }
+    #orbit-learning-lab .loop { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px 16px; }
+    #orbit-learning-lab .loop > div { min-width:0; }
+    #orbit-learning-lab .stage-list { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    #orbit-learning-lab .selected-code { margin:8px 0; min-height:24px; overflow-wrap:anywhere; }
+    #orbit-learning-lab .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+    #orbit-learning-lab .controls-gap { margin:12px 0; }
+    #orbit-learning-lab .label-pair { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    #orbit-learning-lab .form-label { min-width:0; }
+    #orbit-learning-lab .phase-control { width:100%; }
+    @media (max-width:720px) {
+      #orbit-learning-lab .panels { grid-template-columns:1fr; gap:22px; }
+      #orbit-learning-lab .code-flow, #orbit-learning-lab .loop { grid-template-columns:1fr; }
+    }
+  
+.orbit-inline-0 { background:var(--viz-series-1) }
+.orbit-inline-1 { background:var(--viz-series-2) }
+.orbit-inline-2 { background:var(--viz-series-3) }
+.orbit-inline-3 { background:var(--viz-series-4) }
+.orbit-inline-4 { background:var(--viz-series-5) }
