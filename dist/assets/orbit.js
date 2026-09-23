@@ -1,5 +1,4 @@
-
-  (() => {
+(() => {
     const root=document.getElementById('orbit-learning-lab');
     const $=id=>root.querySelector('#ol-'+id);
     const TAU=2*Math.PI, RAD=Math.PI/180, MU=6.678e-11*5.972e24, R=6371000;
@@ -162,6 +161,5 @@
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)$('play').textContent='Advance 1 hour';
     root.orbitDebug={get config(){return {...cfg};},get history(){return history;},get current(){return current();},derivatives,rk,geometry,initial,constants:{MU,R,OE,OS,GEO,LAT,LON},get state(){return cfg;}};
   })();
-  
-document.dispatchEvent(new Event('orbitalhw:state'));
 
+document.dispatchEvent(new Event('orbitalhw:state'));

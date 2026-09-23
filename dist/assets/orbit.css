@@ -1,5 +1,4 @@
-
-    #orbit-learning-lab { color:var(--foreground); }
+#orbit-learning-lab { color:var(--foreground); }
     #orbit-learning-lab .panels { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
     #orbit-learning-lab figure { margin:0; min-width:0; }
     #orbit-learning-lab .scene { display:block; width:100%; overflow:visible; }
@@ -26,7 +25,7 @@
       #orbit-learning-lab .panels { grid-template-columns:1fr; gap:22px; }
       #orbit-learning-lab .code-flow, #orbit-learning-lab .loop { grid-template-columns:1fr; }
     }
-  
+
 .orbit-inline-0 { background:var(--viz-series-1) }
 .orbit-inline-1 { background:var(--viz-series-2) }
 .orbit-inline-2 { background:var(--viz-series-3) }

@@ -10,6 +10,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
 
 
+def write_generated(path, text):
+    path.write_text('\n'.join(line.rstrip() for line in text.splitlines()).strip() + '\n')
+
+
 def extract_document(source, name):
     styles = re.findall(r'<style\b[^>]*>(.*?)</style>', source, re.S | re.I)
     scripts = re.findall(r'<script\b[^>]*>(.*?)</script>', source, re.S | re.I)
@@ -111,9 +115,9 @@ def build():
       document.getElementById('solar-import-status').textContent = 'Invalid imported angles were ignored. Showing the original teaching example.';
     }''')
     for name, body, css, js in [('orbit', orbit, orbit_css, orbit_js), ('solar', solar, solar_css, solar_js)]:
-        (assets / f'{name}.css').write_text(css + '\n')
-        (assets / f'{name}.js').write_text(js + '\n')
-        (dest / ('index.html' if name == 'orbit' else 'solar/index.html')).write_text(shell(name, body))
+        write_generated(assets / f'{name}.css', css)
+        write_generated(assets / f'{name}.js', js)
+        write_generated(dest / ('index.html' if name == 'orbit' else 'solar/index.html'), shell(name, body))
     for name in ['site.css', 'site.js', 'favicon.svg', 'orbit-runtime.css']:
         shutil.copyfile(ROOT / 'src' / name, assets / name)
     (dest / '_headers').write_text('/*\n  Content-Security-Policy: ' + CSP + "; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-cache\n")

@@ -1,5 +1,4 @@
-
-  (() => {
+(() => {
     "use strict";
     const root = document.getElementById("solar-acceleration-app");
     if (!root || root.dataset.initialized === "true") return;
@@ -238,4 +237,3 @@
     root.querySelectorAll("input, button").forEach(control => { control.disabled = false; });
     byId("control-feedback").textContent = "Presets keep θ fixed and change the acceleration direction φ.";
   })();
-  
