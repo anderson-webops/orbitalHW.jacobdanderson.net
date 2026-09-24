@@ -143,6 +143,29 @@ class BuildTests(unittest.TestCase):
                     self.assertEqual(resolved.netloc, 'example.test')
                     self.assertTrue((ROOT / 'dist' / resolved.path.lstrip('/')).is_file(), asset)
 
+    def test_sun_context_is_available_in_both_orbit_routes_but_not_solar_tool(self):
+        sun_ids = {'sun-view', 'ol-sun-system-svg', 'ol-sun-local-svg',
+                   'sun-phase', 'sun-annual', 'sun-theta', 'sun-relative',
+                   'sun-force-note'}
+        for filename, orbit in [('index.html', True), ('admin/index.html', True),
+                                ('solar/index.html', False)]:
+            with self.subTest(page=filename):
+                outline = PageOutline()
+                outline.feed((ROOT / 'dist' / filename).read_text())
+                self.assertEqual(sun_ids & outline.ids, sun_ids if orbit else set())
+                sun_assets = [asset for asset in outline.assets if asset.endswith('/sun-view.js')]
+                self.assertEqual(len(sun_assets), 1 if orbit else 0)
+
+    def test_sun_context_script_is_local_and_loaded_after_orbit_state(self):
+        self.assertTrue((ROOT / 'dist/assets/sun-view.js').is_file())
+        for filename in ['index.html', 'admin/index.html']:
+            page = (ROOT / 'dist' / filename).read_text()
+            scripts = re.findall(r'<script\b[^>]*\bsrc="([^"]+)"[^>]*>', page)
+            orbit = next(index for index, src in enumerate(scripts) if src.endswith('/orbit.js'))
+            sun = next(index for index, src in enumerate(scripts) if src.endswith('/sun-view.js'))
+            self.assertLess(orbit, sun, 'Sun context must reuse the initialized orbit state')
+            self.assertNotIn('unsafe-inline', page)
+
     def test_original_source_bytes_are_preserved(self):
         expected = {
             'orbit.html': '798f06231e9148daeb3e31c972de0932f368b6f662ee173b46cf9aad6857721d',

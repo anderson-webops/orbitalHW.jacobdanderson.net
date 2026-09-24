@@ -15,11 +15,12 @@
     "Earth-relative longitude labeled delta-lambda to distinguish it from the solar relative angle delta",
     "Learning-focused headings, readable control and readout sizes, optional model and search details",
     "Solar diagram labels retain legible screen sizes on narrow displays",
-    "RK4 and simulation-code walkthrough markup included only in the unlinked admin route, without authentication"
+    "RK4 and simulation-code walkthrough markup included only in the unlinked admin route, without authentication",
+    "Space-fixed Sun overview and enlarged Earth neighborhood reuse the existing trajectory and prescribed solar push direction; diagrams are not to scale and do not change the integrator"
   ],
   "source_sha256": {
     "orbit.html": "798f06231e9148daeb3e31c972de0932f368b6f662ee173b46cf9aad6857721d",
     "solar-acceleration-visualizer.html": "8f2b49f1315fde5973ff1bb87cadf40900ed27e94f9ea2326c11ff8764ce5cea"
   },
-  "version": "0.2.1"
+  "version": "0.3.0"
 }

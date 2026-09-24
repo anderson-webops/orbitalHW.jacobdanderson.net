@@ -13,6 +13,8 @@ Open `http://127.0.0.1:4178`. There is no site dependency installation, database
 
 The main page shows the orbital physics views. Open `/admin` (normally redirected to `/admin/`) to also see the RK4 and simulation-code walkthrough. Public pages do not link to this route or contain its walkthrough markup. This is a presentation split, not authentication: anyone with the URL can open it.
 
+The Sun-centered overview and enlarged Earth neighborhood share the existing simulation's time, satellite state and solar-direction phase. They remain space-fixed even when Orbit & observer uses the Earth-fixed camera. The Sun-to-Earth direction represents the prescribed push away from the Sun, not a new heliocentric integration or a calendar ephemeris. The original integrator and equations are unchanged.
+
 ## Validate
 
 ```sh

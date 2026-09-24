@@ -38,7 +38,7 @@ class Page(HTMLParser):
 
 def check():
     dist = ROOT / 'dist'
-    required = ['index.html', 'solar/index.html', 'admin/index.html', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
+    required = ['index.html', 'solar/index.html', 'admin/index.html', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/sun-view.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
     for name in required:
         assert (dist / name).is_file(), f'Missing required artifact: {name}'
     for file in dist.rglob('*.html'):

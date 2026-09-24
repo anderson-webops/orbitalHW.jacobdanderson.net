@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="./assets/site.css">
 <script src="./assets/site.js" defer></script>
 <script src="./assets/orbit.js" defer></script>
+<script src="./assets/sun-view.js" defer></script>
 </head>
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
@@ -56,6 +57,34 @@
   </div>
   <details class="model-notes"><summary>Model assumptions</summary><p>48 hours of equatorial motion around a spherical Earth; no eclipses or thrust. Reflectivity αr = 0.5. Earth rotates once per sidereal day; the solar push direction rotates once per 365 days.</p></details>
   </section>
+<section id="sun-view" class="sun-context" aria-labelledby="sun-heading">
+  <h2 id="sun-heading">The bigger picture: Sun, Earth &amp; satellite</h2>
+  <p class="sun-intro">One moment, two scales. Use the time and initial solar direction controls above to follow the same angles in both views.</p>
+  <div class="sun-panels">
+    <figure>
+      <h3>Sun-centered overview</h3>
+      <svg id="ol-sun-system-svg" role="img" aria-label="Sun, Earth's schematic annual path, and an enlarged satellite orbit. Sunlight travels outward from the Sun."></svg>
+      <figcaption>φ is the push direction, from the Sun toward Earth. The purple trace is the same 48-hour satellite orbit, enlarged.</figcaption>
+    </figure>
+    <figure>
+      <h3>Earth neighborhood, enlarged</h3>
+      <svg id="ol-sun-local-svg" role="img" aria-label="Satellite position angle theta and solar push direction phi in space-fixed axes; their signed difference is the relative angle delta."></svg>
+      <figcaption>θ locates the satellite around Earth. δ compares its outward radial direction with the parallel solar push.</figcaption>
+    </figure>
+  </div>
+  <div class="sun-equation" aria-label="Relative angle equals initial push direction plus annual change minus satellite angle">
+    <span>relative = FORCE_PHASE</span><span>+ ΩSun · time</span><span>− θ</span>
+  </div>
+  <div class="sun-terms">
+    <div><span>Initial push direction</span><strong id="sun-phase"></strong><span>FORCE_PHASE</span></div>
+    <div><span>Annual change</span><strong id="sun-annual"></strong><span>+ ΩSun · time</span></div>
+    <div><span>Satellite angle</span><strong id="sun-theta"></strong><span>− θ</span></div>
+    <div><span>Relative angle, δ</span><strong id="sun-relative"></strong><span>Equivalent within ±180°</span></div>
+  </div>
+  <p id="sun-force-note" class="sun-force-note"></p>
+  <p class="sun-caption">Space-fixed axes in both views; the frame control changes Orbit &amp; observer below. Over 48 hours, the annual direction changes by only about 2°. Body sizes, distances and arrow lengths are not to scale. Earth’s path illustrates the prescribed solar direction, not an additional orbit simulation.</p>
+</section>
+
   <div class="legend text-small" aria-label="Shared color legend">
     <span><i class="orbit-inline-0"></i>Orbit / position</span>
     <span><i class="orbit-inline-1"></i>Solar acceleration</span>

@@ -97,6 +97,124 @@ async function orbitSnapshot(page) {
   });
 }
 
+async function sunSnapshot(page) {
+  await page.waitForFunction(() => {
+    const root = document.querySelector('#orbit-learning-lab');
+    const view = document.querySelector('#sun-view');
+    const debug = root?.orbitDebug;
+    if (!debug?.current || view?.dataset.theta === undefined) return false;
+    const phi = debug.config.phase * Math.PI / 180 + debug.constants.OS * debug.current.t;
+    const acceleration = debug.config.solar ? 9.08e-6 * .5 / debug.config.density : 0;
+    return Math.abs(Number(view.dataset.theta) - debug.current.s[1]) < 1e-10
+      && Math.abs(Number(view.dataset.phi) - phi) < 1e-10
+      && Math.abs(Number(view.dataset.acceleration) - acceleration) < 1e-15;
+  });
+  return page.locator('#sun-view').evaluate(view => {
+    const number = id => {
+      const text = view.querySelector(`#${id}`)?.textContent.replaceAll('−', '-');
+      return Number(text?.match(/[+-]?\d+(?:\.\d+)?/)?.[0]);
+    };
+    const circle = id => {
+      const mark = view.querySelector(`#${id}`);
+      return mark ? { x: Number(mark.getAttribute('cx')), y: Number(mark.getAttribute('cy')) } : null;
+    };
+    const vector = id => {
+      const mark = view.querySelector(`#${id}`);
+      return mark ? {
+        x: Number(mark.getAttribute('x2')) - Number(mark.getAttribute('x1')),
+        y: Number(mark.getAttribute('y2')) - Number(mark.getAttribute('y1')),
+        visible: getComputedStyle(mark).display !== 'none' && getComputedStyle(mark).visibility !== 'hidden'
+          && !mark.closest('[hidden]'),
+      } : null;
+    };
+    return {
+      data: Object.fromEntries(['phi', 'theta', 'relative', 'acceleration'].map(key => [key, Number(view.dataset[key])])),
+      radiusScale: Number(view.dataset.radiusScale),
+      values: Object.fromEntries(['phase', 'annual', 'theta', 'relative'].map(key => [key, number(`sun-${key}`)])),
+      sun: circle('sun-system-sun'), earth: circle('sun-system-earth'),
+      localEarth: circle('sun-local-earth'), satellite: circle('sun-local-satellite'),
+      light: vector('sun-context-light'), push: vector('sun-local-push'),
+      forceNote: view.querySelector('#sun-force-note')?.textContent,
+      text: view.textContent,
+    };
+  });
+}
+
+async function assertSunPhysics(page) {
+  const orbit = await orbitSnapshot(page);
+  const sun = await sunSnapshot(page);
+  const phi = orbit.config.phase * Math.PI / 180 + orbit.constants.OS * orbit.time;
+  const theta = orbit.state[1];
+  const relative = Math.atan2(Math.sin(phi - theta), Math.cos(phi - theta));
+  closeTo(sun.data.phi, phi, 1e-10, 'Sun push inertial direction');
+  closeTo(sun.data.theta, theta, 1e-10, 'Sun context satellite inertial angle');
+  closeTo(Math.sin(sun.data.relative), Math.sin(relative), 1e-10, 'Signed relative sine');
+  closeTo(Math.cos(sun.data.relative), Math.cos(relative), 1e-10, 'Signed relative cosine');
+  assert.ok(sun.data.relative >= -Math.PI && sun.data.relative <= Math.PI, 'Relative angle should be signed');
+  closeTo(sun.data.acceleration, orbit.config.solar ? 9.08e-6 * .5 / orbit.config.density : 0,
+    1e-15, 'Sun push acceleration');
+  closeTo(sun.values.phase, orbit.config.phase, .051, 'Initial phase readout');
+  closeTo(sun.values.annual, orbit.constants.OS * orbit.time * 180 / Math.PI, .051, 'Annual rotation readout');
+  assert.ok(angularError(sun.values.theta, theta * 180 / Math.PI) < .051, 'Theta readout must follow current state');
+  assert.ok(angularError(sun.values.relative, relative * 180 / Math.PI) < .051, 'Relative readout must follow current state');
+  for (const [name, point] of Object.entries({ Sun: sun.sun, Earth: sun.earth,
+    localEarth: sun.localEarth, satellite: sun.satellite })) {
+    assert.ok(point && Number.isFinite(point.x) && Number.isFinite(point.y), `${name} position must be finite`);
+  }
+  const aligned = (vector, direction, name) => {
+    assert.ok(vector && Math.hypot(vector.x, vector.y) > 0, `${name} must have a direction`);
+    const length = Math.hypot(vector.x, vector.y);
+    closeTo(vector.x / length, Math.cos(direction), 1e-5, `${name} x direction`);
+    closeTo(-vector.y / length, Math.sin(direction), 1e-5, `${name} y direction`);
+  };
+  aligned({ x: sun.earth.x - sun.sun.x, y: sun.earth.y - sun.sun.y }, phi, 'Sun-to-Earth direction');
+  aligned({ x: sun.satellite.x - sun.localEarth.x, y: sun.satellite.y - sun.localEarth.y }, theta,
+    'Earth-to-satellite direction');
+  assert.ok(sun.radiusScale > 0, 'Local scene must expose its physical radial scale');
+  closeTo(Math.hypot(sun.satellite.x - sun.localEarth.x, sun.satellite.y - sun.localEarth.y),
+    orbit.state[0] * sun.radiusScale, .001, 'Local satellite radius');
+  aligned(sun.light, phi, 'Sunlight direction');
+  assert.equal(sun.light.visible, true, 'Sunlight remains visible with solar pressure disabled');
+  if (orbit.config.solar) {
+    assert.equal(sun.push?.visible, true, 'Enabled solar pressure needs a push arrow');
+    aligned(sun.push, phi, 'Satellite solar push');
+  } else {
+    assert.ok(!sun.push?.visible, 'Disabled solar pressure must not display a nonzero acceleration arrow');
+    assert.match(sun.forceNote, /off|disabled|zero/i, 'Explain the zero-acceleration state');
+  }
+  assert.match(sun.text, /space.fixed/i, 'Sun schematic frame must be explicit');
+  return { orbit, sun };
+}
+
+async function assertSunLabelsFit(page) {
+  const diagrams = await page.locator('#ol-sun-system-svg, #ol-sun-local-svg').evaluateAll(elements => elements.map(svg => {
+    const bounds = svg.getBoundingClientRect();
+    const labels = Array.from(svg.querySelectorAll('text')).filter(element =>
+      getComputedStyle(element).visibility !== 'hidden' && getComputedStyle(element).display !== 'none'
+      && element.textContent.trim()).map(element => {
+      const box = element.getBoundingClientRect();
+      return { name: element.id || element.textContent, left: box.left, right: box.right,
+        top: box.top, bottom: box.bottom };
+    });
+    const clipped = labels.filter(box => box.left < bounds.left - 1 || box.right > bounds.right + 1
+      || box.top < bounds.top - 1 || box.bottom > bounds.bottom + 1).map(box => box.name);
+    const overlapping = [];
+    for (let a = 0; a < labels.length; a += 1) for (let b = a + 1; b < labels.length; b += 1) {
+      const x = Math.min(labels[a].right, labels[b].right) - Math.max(labels[a].left, labels[b].left);
+      const y = Math.min(labels[a].bottom, labels[b].bottom) - Math.max(labels[a].top, labels[b].top);
+      if (x > 2 && y > 2) overlapping.push([labels[a].name, labels[b].name]);
+    }
+    return { id: svg.id, labels: labels.length, clipped, overlapping };
+  }));
+  assert.equal(diagrams.length, 2);
+  for (const diagram of diagrams) {
+    assert.ok(diagram.labels > 0, `${diagram.id} must be labeled`);
+    assert.deepEqual(diagram.clipped, [], `Labels clipped in ${diagram.id}`);
+    assert.deepEqual(diagram.overlapping, [], `Labels overlap in ${diagram.id}`);
+  }
+  return diagrams;
+}
+
 async function assertNoOverflow(page) {
   const sizes = await page.evaluate(() => ({
     viewport: innerWidth,
@@ -239,6 +357,24 @@ try {
     await orbitReady(page);
   });
 
+  await check('Sun context is a directly integrated public learning view', async () => {
+    assert.equal(await page.locator('#sun-view').isVisible(), true);
+    assert.equal(await page.locator('#sun-view iframe').count(), 0);
+    for (const id of ['#ol-sun-system-svg', '#ol-sun-local-svg']) {
+      assert.equal(await page.locator(id).isVisible(), true);
+      assert.equal(await page.locator(id).getAttribute('role'), 'img');
+      assert.ok((await page.locator(id).getAttribute('aria-label'))?.trim(), `${id} needs an accessible description`);
+      const trace = page.locator(`${id} .sun-satellite-trace`);
+      assert.equal(await trace.count(), 1, `${id} must show the existing satellite trajectory`);
+      const geometry = await trace.getAttribute('d');
+      assert.match(geometry, /^M.+L/, `${id} trajectory needs more than a single point`);
+      assert.doesNotMatch(geometry, /NaN|Infinity|undefined/, `${id} trajectory coordinates must be finite`);
+    }
+    await assertSunPhysics(page);
+    await assertSunLabelsFit(page);
+    assert.match(await page.locator('#sun-view').innerText(), /not to scale|not.*same scale|schematic/i);
+  });
+
   await check('Orbit uses a clear outline while keeping the physical model assumptions', async () => {
     await assertLearningOutline(page, 'Orbit, forces & look angles');
     await page.locator('details.model-notes > summary').click();
@@ -273,6 +409,8 @@ try {
     assert.equal(new URL(page.url()).pathname, '/admin/');
     await assertNativeNavigation(page, true);
     await assertWalkthroughRoute(page, true);
+    assert.equal(await page.locator('#sun-view').isVisible(), true);
+    await assertSunPhysics(page);
     await assertLearningOutline(page, 'Orbit, forces & look angles');
     await page.locator('[data-stage="2"]').click();
     await page.locator('[data-lens="geometry"]').click();
@@ -333,6 +471,7 @@ try {
     await page.waitForTimeout(220);
     assert.equal((await orbitSnapshot(page)).config.hours, stopped);
     assert.match(await page.locator('#ol-play').innerText(), /play/i);
+    await assertSunPhysics(page);
   });
 
   await check('Circular gravity-only GEO is stationary relative to Earth', async () => {
@@ -350,6 +489,37 @@ try {
     await range(page, '#ol-time', 12);
     const zeroForce = await page.locator('#ol-force-values').innerText();
     assert.match(zeroForce, /aSRP 0\.000e\+0/);
+  });
+
+  await check('Sun geometry follows shared time, phase, orbit, density, and pressure settings', async () => {
+    const examples = [
+      { phase: 0, hours: 0, orbit: 'circular', density: '1', solar: true },
+      { phase: 90, hours: 6, orbit: 'ellipse', density: '2', solar: true },
+      { phase: 180, hours: 12, orbit: 'circular', density: '5', solar: true },
+      { phase: 270, hours: 18, orbit: 'ellipse', density: '10', solar: true },
+      { phase: 360, hours: 48, orbit: 'ellipse', density: '1', solar: true },
+      { phase: 75, hours: 23.25, orbit: 'circular', density: '5', solar: false },
+    ];
+    for (const example of examples) {
+      await page.selectOption('#ol-orbit', example.orbit);
+      await page.selectOption('#ol-density', example.density);
+      await page.locator('#ol-solar').setChecked(example.solar);
+      await range(page, '#ol-phase', example.phase);
+      await range(page, '#ol-time', example.hours);
+      await assertSunPhysics(page);
+    }
+    return { examples: examples.length, forceDirections: 'Sun to Earth, parallel at satellite' };
+  });
+
+  await check('Sun context stays space-fixed when the orbit camera becomes Earth-fixed', async () => {
+    await page.selectOption('#ol-frame', 'inertial');
+    const before = await assertSunPhysics(page);
+    await page.selectOption('#ol-frame', 'earth');
+    const after = await assertSunPhysics(page);
+    assert.deepEqual(after.orbit.state, before.orbit.state, 'A camera change must not alter the trajectory');
+    for (const key of ['data', 'sun', 'earth', 'localEarth', 'satellite', 'light', 'push']) {
+      assert.deepEqual(after.sun[key], before.sun[key], `Sun context ${key} must use the same space-fixed axes`);
+    }
   });
 
   await check('Admin RK4 stages handle the final simulation endpoint and native navigation', async () => {
@@ -403,6 +573,7 @@ try {
   });
 
   await check('Solar uses a clear outline and preserves component conventions', async () => {
+    assert.equal(await page.locator('#sun-view').count(), 0, 'Independent normalized geometry tool stays separate');
     await assertLearningOutline(page, 'Solar acceleration components');
     await page.locator('details.model-notes > summary').click();
     const text = await page.locator('#main').innerText();
@@ -526,6 +697,8 @@ try {
           if (name === 'solar') await solarReady(page); else {
             await orbitReady(page);
             await assertWalkthroughRoute(page, name === 'admin');
+            await assertSunPhysics(page);
+            await assertSunLabelsFit(page);
           }
           await page.waitForTimeout(150);
           const size = await assertNoOverflow(page);
@@ -574,6 +747,33 @@ try {
         }
         await assertReadableContent(page);
         checked.push({ width, name, diagrams: diagrams.length });
+      }
+    }
+    return checked;
+  });
+
+  await check('Sun labels fit mobile and desktop at cardinal positions in both themes', async () => {
+    const checked = [];
+    for (const scheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: scheme });
+      for (const width of [320, 390, 1440]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await navigate(page, '/');
+        await orbitReady(page);
+        await page.selectOption('#ol-step', '300');
+        await page.locator('#ol-solar').check();
+        for (const [phase, hours] of [[0, 0], [90, 6], [180, 12], [270, 18], [360, 48]]) {
+          await range(page, '#ol-phase', phase);
+          await range(page, '#ol-time', hours);
+          await assertSunPhysics(page);
+          await assertSunLabelsFit(page);
+          await assertReadableContent(page);
+          await assertNoOverflow(page);
+          checked.push({ scheme, width, phase, hours });
+          if (phase === 90) await page.locator('#sun-view').screenshot({
+            path: path.join(output, `sun-context-${width}-${scheme}.png`),
+          });
+        }
       }
     }
     return checked;

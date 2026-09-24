@@ -67,6 +67,7 @@ def shell(view, content, admin=False):
 <link rel="stylesheet" href="{base}assets/site.css">
 <script src="{base}assets/site.js" defer></script>
 <script src="{base}assets/{view}.js" defer></script>
+{f'<script src="{base}assets/sun-view.js" defer></script>' if orbit else ''}
 </head>
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
@@ -137,6 +138,7 @@ def build():
     orbit, orbit_css, orbit_js = extract_document(orbit_raw, 'orbit')
     solar, solar_css, solar_js = extract_document(solar_raw, 'solar')
     orbit, solar = learning_layout(orbit, solar)
+    orbit = replace_once(orbit, '  <div class="legend text-small"', (ROOT / 'src/sun-view.html').read_text() + '\n  <div class="legend text-small"')
     # Build a real public page without walkthrough markup, not a CSS-only gate.
     walkthrough_start = '<section class="lesson-section" aria-labelledby="rk-heading">'
     walkthrough_end = '<div id="ol-status"'
@@ -201,7 +203,7 @@ def build():
         write_generated(assets / f'{name}.js', js)
         write_generated(dest / ('index.html' if name == 'orbit' else 'solar/index.html'), shell(name, body))
     write_generated(dest / 'admin/index.html', shell('orbit', admin_orbit, admin=True))
-    for name in ['site.css', 'site.js', 'favicon.svg', 'orbit-runtime.css']:
+    for name in ['site.css', 'site.js', 'sun-view.js', 'favicon.svg', 'orbit-runtime.css']:
         shutil.copyfile(ROOT / 'src' / name, assets / name)
     (dest / '_headers').write_text('/*\n  Content-Security-Policy: ' + CSP + "; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-cache\n")
     provenance = json.loads((ROOT / 'src/provenance.json').read_text())
