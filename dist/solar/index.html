@@ -16,19 +16,14 @@
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
 <header class="site-header">
-<a class="site-brand" href="../"><img src="../assets/favicon.svg" alt="" width="38" height="38"><span><strong>Orbital HW</strong><small>Physics you can see. Code you can follow.</small></span></a>
 <nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="../" >Orbit &amp; Code</a><a data-site-view="solar" href="../solar/" aria-current="page">Solar Components</a></nav>
 </header>
 <main id="main" class="site-main">
-<div class="site-intro"><p class="site-eyebrow">ECE 6390 · Interactive learning lab</p><h1>One acceleration. Two local components.</h1><p>Keep the physical vector fixed, rotate the satellite’s local axes, and see why the code uses cosine and sine.</p></div>
-<section class="site-context" aria-label="About this view"><p id="solar-import-status">Independent geometry demonstration. Use the angle controls or return to the orbit to import a moment.</p><a class="site-action" href="../">Back to Orbit &amp; Code</a></section>
+<div class="site-intro"><h1>Solar acceleration components</h1><p>Change the angles to see one solar push resolved into radial and tangential components.</p></div>
+<p id="solar-import-status" class="import-status">Independent angle controls. Import a moment from the orbit’s acceleration view.</p>
 
   <div id="solar-acceleration-app">
-    <header>
-      <p class="eyebrow">Interactive orbital geometry</p>
-      <h1>One acceleration. Two local components.</h1>
-      <p class="intro">The solar acceleration has one direction in the fixed plane. The satellite’s radial and tangential axes point in different directions as it moves. Change either angle to see how the projections change.</p>
-    </header>
+
 
     <section class="controls" aria-label="Angle controls">
       <div class="control-grid">
@@ -202,13 +197,12 @@ a_theta = self.acceleration * math.sin(relative)</code></pre>
         </dl>
       </div>
     </section>
-    <footer class="footer">Geometry demonstration, not a trajectory simulation. The dashed circle in the left view is a position-angle guide, not a prediction of the orbit. Positive angles are counterclockwise. + tangential is the direction of increasing θ, not necessarily the direction of the satellite’s velocity.</footer>
+    <details class="model-notes"><summary>Reading the diagrams</summary><p>The dashed circle is a position-angle guide, not a predicted orbit. Positive angles are counterclockwise. + tangential means increasing θ, not necessarily the direction of the satellite’s velocity.</p></details>
   </div>
 
 
 
-<noscript><p>JavaScript is needed for interactive controls. No account or network connection is required once the page is loaded.</p></noscript>
+<noscript><p>Enable JavaScript to use the interactive controls.</p></noscript>
 </main>
-<footer class="site-footer"><span>orbitalHW.jacobdanderson.net · Learning tools, not assignment solutions</span><span>Runs in your browser · No analytics · <a href="../source-info.json">Source provenance</a></span></footer>
 </body>
 </html>

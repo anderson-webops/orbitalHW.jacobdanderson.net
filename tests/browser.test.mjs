@@ -118,6 +118,75 @@ async function assertNativeNavigation(page) {
   }
 }
 
+async function assertReadableContent(page) {
+  const measurements = await page.evaluate(() => {
+    const tooSmall = [];
+    const targets = [];
+    let textNodes = 0;
+    // Measure disclosure content too, then restore the reader's original view.
+    const disclosures = Array.from(document.querySelectorAll('details'), element => ({ element, open: element.open }));
+    for (const { element } of disclosures) element.open = true;
+    const visible = element => {
+      const style = getComputedStyle(element);
+      return element.getClientRects().length && style.visibility !== 'hidden' && style.display !== 'none'
+        && !element.closest('[hidden], .sr-only, [aria-hidden="true"]');
+    };
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const element = node.parentElement;
+      const text = node.textContent.trim();
+      if (!text || !element || !visible(element)
+        || element.closest('script, style, noscript, sub, sup')) continue;
+      const inDiagram = Boolean(element.closest('svg'));
+      const minimum = inDiagram ? 12 : element.closest('code, pre') ? 13 : 15;
+      const declaredSize = parseFloat(getComputedStyle(element).fontSize);
+      const matrix = inDiagram ? element.getScreenCTM() : null;
+      const size = declaredSize * (matrix ? Math.hypot(matrix.a, matrix.b) : 1);
+      textNodes += 1;
+      if (size < minimum - .1) tooSmall.push({ text: text.slice(0, 90), size, minimum });
+    }
+    for (const element of document.querySelectorAll('button, input, select, summary, .site-nav a, #inspect-solar')) {
+      if (!visible(element)) continue;
+      // A labeled checkbox can have a small glyph while its complete label is tappable.
+      const target = element.matches('input[type="checkbox"], input[type="radio"]')
+        ? element.closest('label') || element : element;
+      const { width, height } = target.getBoundingClientRect();
+      if (width < 43.5 || height < 43.5) targets.push({
+        element: element.id || element.textContent.trim().slice(0, 60), width, height,
+      });
+    }
+    const expandedWidth = document.documentElement.scrollWidth;
+    for (const { element, open } of disclosures) element.open = open;
+    return { textNodes, tooSmall, smallTargets: targets, expandedWidth, viewport: innerWidth };
+  });
+  assert.ok(measurements.textNodes > 20, 'Readability check did not measure instructional content');
+  assert.deepEqual(measurements.tooSmall, [], 'Instructional text is too small');
+  assert.deepEqual(measurements.smallTargets, [], 'Interactive controls need 44px touch targets');
+  assert.ok(measurements.expandedWidth <= measurements.viewport + 1, 'Expanded teaching notes should not overflow');
+  return { textNodes: measurements.textNodes };
+}
+
+async function assertLearningOutline(page, title) {
+  assert.equal(await page.locator('h1').count(), 1, 'Keep one page title instead of stacked titles');
+  assert.equal(await page.locator('h1').innerText(), title);
+  const headings = await page.locator('h1, h2, h3, h4, h5, h6').evaluateAll(elements => elements.map(element => ({
+    level: Number(element.tagName[1]), text: element.textContent.trim(),
+  })));
+  let previous = 0;
+  for (const heading of headings) {
+    assert.ok(heading.level <= previous + 1, `Heading level skipped before ${heading.text}`);
+    previous = heading.level;
+  }
+  assert.equal(await page.locator('.site-footer, a[href$="source-info.json"]').count(), 0);
+  const text = await page.locator('body').innerText();
+  for (const boilerplate of [
+    /Learning tools, not assignment solutions/i, /No analytics/i, /Source provenance/i,
+    /orbitalHW\.jacobdanderson\.net/i, /Physics you can see\. Code you can follow\./i,
+    /One orbit, four connected views/i, /One acceleration\. Two local components\./i,
+    /Watch the orbit\. Follow the code\./i, /no optimized homework orbit/i,
+  ]) assert.doesNotMatch(text, boilerplate, 'Non-teaching page chrome should remain removed');
+}
+
 await mkdir(output, { recursive: true });
 try {
   browser = await chromium.launch({ headless: true });
@@ -137,6 +206,20 @@ try {
     await page.screenshot({ path: path.join(output, 'orbit-desktop-light.png'), fullPage: true });
   });
 
+  await check('Orbit uses a clear outline while keeping the physical model assumptions', async () => {
+    await assertLearningOutline(page, 'Orbit, forces & look angles');
+    await page.locator('details.model-notes > summary').click();
+    const text = await page.locator('#main').innerText();
+    for (const assumption of [/spherical Earth/i, /equatorial/i, /eclipses/i, /thrust/i, /sidereal/i]) {
+      assert.match(text, assumption, 'Model assumptions must remain visible for learning');
+    }
+    await page.locator('details.model-notes > summary').click();
+    const besideAcceleration = await page.locator('#inspect-solar').evaluate(link =>
+      Boolean(link.closest('figure')?.querySelector('#ol-force-svg')));
+    assert.equal(besideAcceleration, true, 'Angle exploration should be beside its acceleration diagram');
+    return assertReadableContent(page);
+  });
+
   await check('Orbit controls, code lens, and RK4 selection update the active state', async () => {
     await page.selectOption('#ol-density', '5');
     await page.selectOption('#ol-step', '300');
@@ -153,6 +236,15 @@ try {
     assert.match(await page.locator('#ol-derivative-values').innerText(), /k3/);
     assert.match(await page.locator('#ol-code-detail').innerText(), /acos.*isVisible/);
     assert.match(await page.locator('#ol-orbit-svg').textContent(), /Earth-fixed/);
+    await page.locator('details.search-details > summary').click();
+    for (const lens of ['baseline', 'density', 'design', 'simulate', 'metrics', 'rk4', 'commit']) {
+      await page.locator(`[data-lens="${lens}"]`).click();
+      assert.equal((await orbitSnapshot(page)).config.lens, lens);
+      assert.equal(await page.locator(`[data-lens="${lens}"]`).getAttribute('aria-pressed'), 'true');
+      assert.ok((await page.locator('#ol-code-detail').innerText()).trim().length > 20);
+    }
+    await page.locator('[data-lens="geometry"]').click();
+    await page.locator('details.search-details > summary').click();
   });
 
   await check('Orbit settings and selected learning state survive reload', async () => {
@@ -219,8 +311,21 @@ try {
     await solarReady(page);
     assert.equal(Number(await page.locator('#theta-number').inputValue()), theta);
     assert.equal(Number(await page.locator('#phi-number').inputValue()), phi);
-    assert.match(await page.locator('#solar-import-status').innerText(), /import/i);
+    const status = await page.locator('#solar-import-status').innerText();
+    assert.match(status, /import/i);
+    assert.match(status, /nearest degree/i, 'The transfer must disclose whole-degree rounding');
     await assertNativeNavigation(page);
+  });
+
+  await check('Solar uses a clear outline and preserves component conventions', async () => {
+    await assertLearningOutline(page, 'Solar acceleration components');
+    await page.locator('details.model-notes > summary').click();
+    const text = await page.locator('#main').innerText();
+    for (const concept of [/radians/i, /counterclockwise/i, /not.*velocity/i, /self\.acceleration/]) {
+      assert.match(text, concept, 'Component interpretation must remain visible for learning');
+    }
+    await page.locator('details.model-notes > summary').click();
+    return assertReadableContent(page);
   });
 
   await check('Solar projections, sign conventions, and SVG vector addition agree across an angle grid', async () => {
@@ -278,7 +383,9 @@ try {
     await page.locator('#reset').click();
     assert.equal(await page.locator('#theta-number').inputValue(), '35');
     assert.equal(await page.locator('#phi-number').inputValue(), '80');
-    assert.match(await page.locator('#solar-import-status').innerText(), /original teaching example/i);
+    const status = await page.locator('#solar-import-status').innerText();
+    assert.match(status, /reset/i);
+    assert.match(status, /independent/i);
     assert.equal(new URL(page.url()).search, '');
     await page.screenshot({ path: path.join(output, 'solar-desktop-light.png'), fullPage: true });
   });
@@ -296,7 +403,22 @@ try {
       }
       if (query === '?theta=0&phi=0') assert.deepEqual([theta, phi], [0, 0]);
       if (query === '?theta=-180&phi=180') assert.deepEqual([theta, phi], [-180, 180]);
+      if (query.includes('not-a-number') || query === '?theta=&phi=' || query.includes('999999')) {
+        assert.match(await page.locator('#solar-import-status').innerText(), /invalid/i);
+        assert.deepEqual([theta, phi], [35, 80], 'Invalid imports should retain the starting example');
+      }
     }
+  });
+
+  await check('Independent solar exploration clears the imported snapshot', async () => {
+    await navigate(page, '/solar/');
+    await solarReady(page);
+    assert.match(await page.locator('#solar-import-status').innerText(), /independent/i);
+    await navigate(page, '/solar/?theta=10&phi=20&from=orbit');
+    await solarReady(page);
+    await angle(page, 'theta', 15);
+    assert.match(await page.locator('#solar-import-status').innerText(), /independent/i);
+    assert.equal(new URL(page.url()).search, '', 'Edited angles should not retain stale import parameters');
   });
 
   await check('Native site links navigate between both tools', async () => {
@@ -319,7 +441,8 @@ try {
           if (name === 'orbit') await orbitReady(page); else await solarReady(page);
           await page.waitForTimeout(150);
           const size = await assertNoOverflow(page);
-          dimensions.push({ name, scheme, width, ...size });
+          const readability = await assertReadableContent(page);
+          dimensions.push({ name, scheme, width, ...size, ...readability });
           if (width === 320 || width === 1440) {
             await page.screenshot({ path: path.join(output, `${name}-${width}-${scheme}.png`), fullPage: true });
           }
@@ -327,6 +450,45 @@ try {
       }
     }
     return dimensions;
+  });
+
+  await check('Solar labels remain readable and separated at mobile cardinal angles', async () => {
+    const checked = [];
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await navigate(page, '/solar/');
+      await solarReady(page);
+      for (const [name, phi] of [['default', 80], ['outward', 35], ['tangent', 125], ['inward', -145], ['negative-tangent', -55]]) {
+        await angle(page, 'theta', 35);
+        await angle(page, 'phi', phi);
+        const diagrams = await page.locator('svg.diagram').evaluateAll(elements => elements.map(svg => {
+          const bounds = svg.getBoundingClientRect();
+          const labels = Array.from(svg.querySelectorAll('text')).filter(element =>
+            getComputedStyle(element).visibility !== 'hidden' && element.textContent.trim()).map(element => {
+            const box = element.getBoundingClientRect();
+            return { name: element.id || element.textContent, left: box.left, right: box.right,
+              top: box.top, bottom: box.bottom };
+          });
+          const clipped = labels.filter(box => box.left < bounds.left - 1 || box.right > bounds.right + 1
+            || box.top < bounds.top - 1 || box.bottom > bounds.bottom + 1).map(box => box.name);
+          const overlapping = [];
+          for (let a = 0; a < labels.length; a += 1) for (let b = a + 1; b < labels.length; b += 1) {
+            const x = Math.min(labels[a].right, labels[b].right) - Math.max(labels[a].left, labels[b].left);
+            const y = Math.min(labels[a].bottom, labels[b].bottom) - Math.max(labels[a].top, labels[b].top);
+            if (x > 2 && y > 2) overlapping.push([labels[a].name, labels[b].name]);
+          }
+          return { id: svg.id, clipped, overlapping };
+        }));
+        for (const diagram of diagrams) {
+          await page.locator(`#${diagram.id}`).screenshot({ path: path.join(output, `solar-${width}-${name}-${diagram.id}.png`) });
+          assert.deepEqual(diagram.clipped, [], `${width}px ${name}: labels clipped in ${diagram.id}`);
+          assert.deepEqual(diagram.overlapping, [], `${width}px ${name}: labels overlap in ${diagram.id}`);
+        }
+        await assertReadableContent(page);
+        checked.push({ width, name, diagrams: diagrams.length });
+      }
+    }
+    return checked;
   });
 
   await check('Reduced motion advances discretely instead of starting continuous playback', async () => {

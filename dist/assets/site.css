@@ -1,36 +1,212 @@
-:root { color-scheme: light dark; --site-bg:light-dark(#fafbf9,#141917); --site-ink:light-dark(#172822,#e8efeb); --site-muted:light-dark(#52635c,#acbdb4); --site-line:light-dark(#d8e2dc,#35453d); --site-accent:light-dark(#25684d,#a0d5b8); --site-tint:light-dark(#e8f0e9,#26392f); --site-surface:light-dark(#ffffff,#1b2420); --color-background-primary:var(--site-bg); --color-text-primary:var(--site-ink); --color-text-secondary:var(--site-muted); --background:var(--site-bg); --foreground:var(--site-ink); }
-* { box-sizing:border-box; }
-html, body { margin:0; padding:0; background:var(--site-bg); color:var(--site-ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-.site-header, .site-main, .site-footer { width:min(1160px,calc(100% - 48px)); margin-inline:auto; }
-.site-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; padding:26px 0 21px; border-bottom:1px solid var(--site-line); }
-.site-brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--site-ink); }
-.site-brand img { width:38px; height:38px; }
-.site-brand strong { font-size:20px; font-weight:650; letter-spacing:-.04em; }
-.site-brand small { display:block; font-size:12px; color:var(--site-muted); letter-spacing:.02em; }
-.site-nav { display:flex; flex-wrap:wrap; gap:5px; }
-.site-nav a { display:inline-flex; min-height:44px; align-items:center; padding:10px 16px; border-radius:8px; color:var(--site-muted); font-size:14px; text-decoration:none; font-weight:550; }
-.site-nav a[aria-current="page"] { color:var(--site-accent); background:var(--site-tint); }
-.site-nav a:hover, .site-action:hover { text-decoration:underline; text-underline-offset:4px; }
-.site-intro { padding:32px 0 24px; max-width:860px; }
-.site-eyebrow { color:var(--site-accent); font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.12em; margin:0 0 9px; }
-.site-intro h1 { margin:0; font-size:clamp(28px,4.5vw,44px); font-weight:600; letter-spacing:-.04em; line-height:1.15; }
-.site-intro p:last-child { margin:12px 0 0; color:var(--site-muted); font-size:15px; line-height:1.65; }
-.site-context { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 24px; align-items:center; padding:14px 0; margin:0 0 24px; border-block:1px solid var(--site-line); }
-.site-context p { margin:0; color:var(--site-muted); font-size:13px; line-height:1.6; max-width:640px; }
-.site-action { display:inline-flex; align-items:center; min-height:44px; padding:9px 14px; border-radius:8px; border:1px solid var(--site-line); background:var(--site-surface); color:var(--site-accent); font-size:14px; font-weight:550; text-decoration:none; }
-.site-footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 20px; border-top:1px solid var(--site-line); margin-top:40px; padding:20px 0 28px; color:var(--site-muted); font-size:12px; line-height:1.6; }
-.site-footer a { color:inherit; text-underline-offset:3px; }
-.site-skip { position:absolute; left:16px; top:-80px; padding:12px 18px; background:var(--site-surface); color:var(--site-ink); z-index:10; }
-.site-skip:focus { top:12px; }
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid var(--site-accent); outline-offset:4px; }
-#orbit-learning-lab { --font-size-base:15px; }
-#orbit-learning-lab > h2 { font-size:21px; margin-bottom:8px; }
-#orbit-learning-lab .scene text.small { font-size:12px; }
-#orbit-learning-lab .panels { gap:30px; }
-#solar-acceleration-app { max-width:none; padding:0; --page:var(--site-bg); --surface:var(--site-surface); --ink:var(--site-ink); --muted:var(--site-muted); --line:var(--site-line); }
-#solar-acceleration-app > header { display:none; }
-#solar-acceleration-app .controls { margin-top:0; }
-#solar-acceleration-app .diagram { min-height:260px; }
-@media(max-width:720px) { .site-header,.site-main,.site-footer { width:calc(100% - 32px); } .site-header { gap:16px; padding-top:18px; } .site-nav { width:100%; } .site-nav a { flex:1; justify-content:center; } .site-intro { padding:25px 0 20px; } .site-context { align-items:stretch; } .site-action { justify-content:center; } #solar-acceleration-app { padding:0; } }
-@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
-@media print { .site-header,.site-context,.site-footer { display:none; } .site-main { width:100%; } }
+:root {
+  color-scheme: light dark;
+  --site-bg: light-dark(#f5f7fa, #111820);
+  --site-surface: light-dark(#ffffff, #19232d);
+  --site-soft: light-dark(#f0f4f8, #212e3b);
+  --site-ink: light-dark(#1d2b3a, #edf3fa);
+  --site-muted: light-dark(#4c6073, #b7c6d5);
+  --site-line: light-dark(#d5dfe8, #3a4b5d);
+  --site-accent: light-dark(#245faa, #9ac5ff);
+  --site-tint: light-dark(#e9f1fc, #263d58);
+  --color-background-primary: var(--site-bg);
+  --color-text-primary: var(--site-ink);
+  --color-text-secondary: var(--site-muted);
+  --background: var(--site-bg);
+  --foreground: var(--site-ink);
+  --font-size-base: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--site-bg);
+  color: var(--site-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.site-header, .site-main { width: min(1200px, calc(100% - 64px)); margin-inline: auto; }
+.site-header { padding-top: 18px; border-bottom: 1px solid var(--site-line); }
+.site-nav { display: flex; gap: 24px; }
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 2px 12px;
+  border-bottom: 3px solid transparent;
+  color: var(--site-muted);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.site-nav a[aria-current="page"] { color: var(--site-accent); border-bottom-color: var(--site-accent); }
+.site-nav a:hover { color: var(--site-ink); }
+.site-main { padding-bottom: 56px; }
+.site-intro { padding: 28px 0 24px; }
+.site-intro h1 { margin: 0; font-size: clamp(26px, 3.4vw, 34px); font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+.site-intro p { max-width: 72ch; margin: 10px 0 0; color: var(--site-muted); font-size: 16px; }
+.site-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 0;
+  color: var(--site-accent);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.import-status { margin: -8px 0 20px; font-size: 15px; color: var(--site-muted); }
+.site-skip { position: absolute; left: 16px; top: -80px; padding: 12px 18px; background: var(--site-surface); color: var(--site-ink); z-index: 10; }
+.site-skip:focus { top: 12px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--site-accent); outline-offset: 4px; }
+summary { min-height: 44px; padding: 10px 0; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--site-muted); }
+details p { max-width: 85ch; font-size: 15px; line-height: 1.65; }
+.model-notes { border-top: 1px solid var(--site-line); margin-top: 12px; }
+.model-notes p { margin: 0 0 12px; color: var(--site-muted); }
+
+/* The original simulation remains intact; these are presentation overrides. */
+#orbit-learning-lab {
+  --font-size-base: 16px;
+  --font-size-normal: 16px;
+  --font-size-small: 15px;
+  --line-height-small: 1.6;
+  --foreground: var(--site-ink);
+  --muted-foreground: var(--site-muted);
+  --primary: var(--site-accent);
+  --primary-foreground: light-dark(#ffffff, #10233d);
+  --secondary: var(--site-surface);
+  --secondary-foreground: var(--site-ink);
+  --input: var(--site-line);
+  --border: var(--site-line);
+  --accent: var(--site-tint);
+  --accent-foreground: var(--site-accent);
+  --viz-series-1: light-dark(#2463b2, #86b7fc);
+  --viz-series-2: light-dark(#b55113, #ffb078);
+  --viz-series-3: light-dark(#08786a, #69caba);
+  --viz-series-4: light-dark(#a53771, #f1a6ce);
+  --viz-series-5: light-dark(#7444ad, #c8a6f5);
+}
+#orbit-learning-lab h2 { margin: 0 0 16px; font-size: 21px; font-weight: 650; letter-spacing: -.02em; line-height: 1.35; }
+#orbit-learning-lab .experiment-controls, #orbit-learning-lab figure, #orbit-learning-lab .lesson-section {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--site-line);
+  border-radius: 10px;
+  background: var(--site-surface);
+}
+#orbit-learning-lab .viz-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0 0 18px; align-items: end; }
+#orbit-learning-lab .viz-controls > .form-label { min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 6px; font-size: 15px; line-height: 1.5; }
+#orbit-learning-lab .form-select { min-height: 44px; padding: 9px 30px 9px 12px; font-size: 16px; border-radius: 6px; }
+#orbit-learning-lab .btn { min-height: 44px; padding: 9px 13px; font-size: 15px; line-height: 1.5; border-radius: 6px; white-space: normal; }
+#orbit-learning-lab .btn-primary { background: var(--site-accent); color: var(--primary-foreground); }
+#orbit-learning-lab .form-check { min-height: 44px; gap: 10px; padding: 8px 4px; }
+#orbit-learning-lab .form-check-input { width: 18px; height: 18px; }
+#orbit-learning-lab .form-check-label { font-size: 15px; }
+#orbit-learning-lab .form-range { min-height: 44px; margin: 0; }
+#orbit-learning-lab .timeline-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 14px; }
+#orbit-learning-lab .controls-gap { margin: 0; }
+#orbit-learning-lab .experiment-controls > .viz-controls { margin-bottom: 16px; }
+#orbit-learning-lab .label-pair { font-size: 15px; line-height: 1.5; }
+#orbit-learning-lab output { font-weight: 650; color: var(--site-accent); }
+#orbit-learning-lab .legend { gap: 10px 24px; margin: 22px 0 18px; font-size: 15px; color: var(--site-muted); }
+#orbit-learning-lab .panels { gap: 24px; align-items: stretch; }
+#orbit-learning-lab figure { display: flex; flex-direction: column; }
+#orbit-learning-lab .scene { font-size: 15px; }
+#orbit-learning-lab .scene text.small { font-size: 12px; }
+#orbit-learning-lab .readout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; padding: 1px; margin-top: 12px; background: var(--site-line); border-radius: 6px; overflow: hidden; font-size: 15px; line-height: 1.6; }
+#orbit-learning-lab .readout:empty { display: none; }
+#orbit-learning-lab .readout span { min-width: 0; padding: 9px 11px; background: var(--site-soft); overflow-wrap: anywhere; }
+#orbit-learning-lab .site-action { margin-top: 10px; align-self: flex-start; }
+#orbit-learning-lab .lesson-section { margin-top: 24px; }
+#orbit-learning-lab .stage-list { gap: 8px; margin: 0 0 16px; }
+#orbit-learning-lab .lesson-section > .readout { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#orbit-learning-lab .loop { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+#orbit-learning-lab .loop > div, #orbit-learning-lab .code-flow > div { padding: 14px; border: 1px solid var(--site-line); border-radius: 8px; }
+#orbit-learning-lab .loop .btn, #orbit-learning-lab .code-flow .btn { justify-content: flex-start; text-align: left; width: 100%; }
+#orbit-learning-lab .code-label { margin-top: 10px; color: var(--site-muted); font-size: 15px; line-height: 1.6; }
+#orbit-learning-lab .connector { padding: 12px 0; font-size: 15px; color: var(--site-muted); }
+#orbit-learning-lab .selected-code { margin: 12px 0 0; padding: 14px 16px; border-left: 3px solid var(--site-accent); background: var(--site-tint); font-size: 16px; line-height: 1.65; }
+#orbit-learning-lab .search-details { margin-top: 20px; border-top: 1px solid var(--site-line); }
+#orbit-learning-lab .search-details .code-flow { gap: 16px; }
+
+/* Match the component close-up to the orbit page without hiding its lessons. */
+#solar-acceleration-app {
+  max-width: none;
+  padding: 0;
+  --page: var(--site-bg);
+  --surface: var(--site-surface);
+  --surface-soft: var(--site-soft);
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --line: var(--site-line);
+}
+#solar-acceleration-app .controls { margin-top: 0; padding: 24px; border-radius: 10px; }
+#solar-acceleration-app .small, #solar-acceleration-app .view-heading p,
+#solar-acceleration-app .view-caption, #solar-acceleration-app .legend,
+#solar-acceleration-app .result-name, #solar-acceleration-app .result-note,
+#solar-acceleration-app .result-formula, #solar-acceleration-app .readout-note,
+#solar-acceleration-app .model-terms, #solar-acceleration-app .feedback,
+#solar-acceleration-app .preset-caption, #solar-acceleration-app .presets button { font-size: 15px; line-height: 1.65; }
+#solar-acceleration-app .control-heading label { font-size: 16px; }
+#solar-acceleration-app .range-labels { font-size: 13px; }
+#solar-acceleration-app .views { gap: 24px; margin-top: 24px; }
+#solar-acceleration-app .view { border-radius: 10px; }
+#solar-acceleration-app h2, #solar-acceleration-app .view-heading h2 { font-size: 21px; line-height: 1.35; }
+#solar-acceleration-app .view-heading { padding: 24px 24px 0; }
+#solar-acceleration-app .view-caption { padding: 0 24px 24px; }
+#solar-acceleration-app .diagram { min-height: 260px; }
+#solar-acceleration-app .diagram text { font-size: var(--diagram-label-size, 16px); }
+#solar-acceleration-app .diagram .muted-label { font-size: var(--diagram-small-size, 14px); }
+#solar-acceleration-app .result { padding: 24px; }
+#solar-acceleration-app .result-value { font-size: 32px; }
+#solar-acceleration-app .explanation { gap: 32px; margin-top: 32px; padding-top: 28px; }
+#solar-acceleration-app .explanation p { font-size: 16px; line-height: 1.75; }
+#solar-acceleration-app .code { font-size: 14px; line-height: 1.85; padding: 18px; }
+#solar-acceleration-app .model-terms { gap: 8px 16px; }
+#solar-acceleration-app .model-notes { margin-top: 28px; }
+#solar-acceleration-app .model-notes p { margin: 0 0 12px; }
+
+@media (max-width: 1000px) {
+  #orbit-learning-lab .viz-controls, #orbit-learning-lab .loop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #orbit-learning-lab .readout { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .site-header, .site-main { width: calc(100% - 32px); }
+  .site-header { padding-top: 8px; }
+  .site-intro { padding: 24px 0 20px; }
+  .site-nav { gap: 20px; }
+  .site-nav a { font-size: 15px; }
+  #orbit-learning-lab .panels, #solar-acceleration-app .views,
+  #solar-acceleration-app .control-grid, #solar-acceleration-app .explanation { grid-template-columns: 1fr; }
+  #orbit-learning-lab .timeline-controls { grid-template-columns: 1fr; gap: 8px; }
+  #orbit-learning-lab .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #orbit-learning-lab .lesson-section > .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #orbit-learning-lab .search-details .code-flow { grid-template-columns: 1fr; }
+  #solar-acceleration-app .control-grid { gap: 18px; }
+  #solar-acceleration-app .control-heading { flex-wrap: wrap; }
+  #solar-acceleration-app .results { grid-template-columns: 1fr 1fr; }
+  #solar-acceleration-app .result:first-child { grid-column: 1 / -1; }
+  #solar-acceleration-app .result:nth-child(2) { border-left: 0; border-top: 1px solid var(--site-line); }
+  #solar-acceleration-app .result:nth-child(3) { border-top: 1px solid var(--site-line); }
+}
+@media (max-width: 480px) {
+  #orbit-learning-lab .scene text.small { font-size: 13px; }
+  #orbit-learning-lab .experiment-controls, #orbit-learning-lab .lesson-section { padding: 16px; }
+  #orbit-learning-lab figure { padding: 12px; }
+  #orbit-learning-lab h2, #solar-acceleration-app h2, #solar-acceleration-app .view-heading h2 { font-size: 20px; }
+  #orbit-learning-lab .viz-controls, #orbit-learning-lab .loop,
+  #orbit-learning-lab .readout, #orbit-learning-lab .lesson-section > .readout { grid-template-columns: 1fr; }
+  #orbit-learning-lab .stage-list { display: grid; grid-template-columns: 1fr 1fr; }
+  #orbit-learning-lab .stage-list .btn { width: 100%; }
+  #solar-acceleration-app .controls, #solar-acceleration-app .result { padding: 16px; }
+  #solar-acceleration-app .view-heading { padding: 18px 16px 0; }
+  #solar-acceleration-app .view-caption { padding: 0 16px 18px; }
+  #solar-acceleration-app .results { grid-template-columns: 1fr; }
+  #solar-acceleration-app .result + .result { border-left: 0; border-top: 1px solid var(--site-line); }
+  #solar-acceleration-app .model-terms { grid-template-columns: 1fr; }
+  #solar-acceleration-app .model-terms dd { margin-bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .site-header { display: none; } .site-main { width: 100%; } .lesson-section, figure { break-inside: avoid; } }

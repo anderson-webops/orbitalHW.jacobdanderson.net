@@ -43,8 +43,8 @@
     if (!event.target.closest('input, button')) return;
     const reset = event.target.closest('#reset');
     document.getElementById('solar-import-status').textContent = reset
-      ? 'Reset to the original teaching example. These angles are independent of the orbit snapshot.'
-      : 'Exploring edited angles independently. Return to the orbit to import another moment.';
+      ? 'Reset to the default angles, independent of the orbit snapshot.'
+      : 'Exploring independently. Import another moment from the orbit’s acceleration view.';
     try { history.replaceState(null, '', location.pathname + location.hash); } catch { /* Some local file policies disallow URL updates. */ }
   }
   solar?.addEventListener('input', editedSolar);

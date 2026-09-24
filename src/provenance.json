@@ -4,6 +4,6 @@
   "structure": "Dependency-free static build following the local Liar's Dice site convention; Vitesse Lite informs external assets, CSP and validation.",
   "template_reference": "Vitesse Lite local revision 39e8214b382be4f308a6f5eee068c295e42749ec",
   "inputs": ["Previously created Orbital Physics and Code visualization", "User-provided solar-acceleration-visualizer.html"],
-  "adaptations": ["Shared navigation and layout", "Externalized scripts and styles", "Browser-local orbit state", "Whole-degree angle transfer between tools", "Earth-relative longitude labeled delta-lambda to distinguish it from the solar relative angle delta"],
+  "adaptations": ["Shared navigation and layout", "Externalized scripts and styles", "Browser-local orbit state", "Whole-degree angle transfer between tools", "Earth-relative longitude labeled delta-lambda to distinguish it from the solar relative angle delta", "Learning-focused headings, readable control and readout sizes, optional model and search details", "Solar diagram labels retain legible screen sizes on narrow displays"],
   "source_sha256": {}
 }

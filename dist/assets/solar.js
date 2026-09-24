@@ -12,9 +12,9 @@
     if (validImport) {
       state.theta = Math.round(Number(incoming[0]));
       state.phi = Math.round(Number(incoming[1]));
-      document.getElementById('solar-import-status').textContent = 'Imported from orbit: angles rounded to the nearest degree. The arrows show normalized components, not force magnitude or a new orbit.';
+      document.getElementById('solar-import-status').textContent = 'Imported from orbit, rounded to the nearest degree. Edit the angles to explore independently.';
     } else if (incoming.some(value => value !== null)) {
-      document.getElementById('solar-import-status').textContent = 'Invalid imported angles were ignored. Showing the original teaching example.';
+      document.getElementById('solar-import-status').textContent = 'Invalid imported angles ignored. Showing the default example.';
     }
     const center = { x: 280, y: 239 };
     const orbitRadius = 112;
@@ -62,7 +62,11 @@
      */
     function separateLabels(ids, margin = 7) {
       const bounds = { left: 14, right: 546, top: 16, bottom: 450 };
-      const placed = [];
+      // Reserve the fixed axis labels and Earth before placing moving labels.
+      const svg = byId(ids[0]).ownerSVGElement;
+      const placed = Array.from(svg.querySelectorAll('text'))
+        .filter(label => !ids.includes(label.id))
+        .map(label => label.getBBox());
       const offsets = [[0, 0]];
       // Prefer nearby vertical shifts, then horizontal/diagonal alternatives.
       for (const distance of [22, 44, 66, 88]) {
@@ -94,7 +98,15 @@
       }
     }
 
+    function sizeDiagramLabels(id) {
+      const svg = byId(id);
+      const scale = Math.min(1, Math.abs(svg.getScreenCTM()?.a || 1));
+      svg.style.setProperty('--diagram-label-size', `${16 / scale}px`);
+      svg.style.setProperty('--diagram-small-size', `${14 / scale}px`);
+    }
+
     function drawFixedFrame() {
+      sizeDiagramLabels('fixed-svg');
       const sat = point(center, state.theta, orbitRadius);
       const radialEnd = point(sat, state.theta, 75);
       const tangentEnd = point(sat, state.theta + 90, 75);
@@ -126,6 +138,7 @@
     }
 
     function drawLocalFrame(relative, ar, at) {
+      sizeDiagramLabels('local-svg');
       // Shared scale is essential: R + T = A exactly, before display rounding.
       const R = { x: center.x + accelerationScale * ar, y: center.y };
       const T = { x: center.x, y: center.y - accelerationScale * at };
@@ -231,6 +244,15 @@
       byId("control-feedback").textContent = "Reset to θ = 35° and φ = 80°. Relative angle = 45°.";
       render();
     });
+
+    let diagramWidth = 0;
+    new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      if (Math.abs(width - diagramWidth) > .5) {
+        diagramWidth = width;
+        render();
+      }
+    }).observe(root);
 
     // Render before enabling controls. Without JavaScript the SVG starting frame remains useful.
     render();

@@ -45,10 +45,10 @@ def extract_document(source, name):
 def shell(view, content):
     orbit = view == 'orbit'
     base = './' if orbit else '../'
-    title = 'Watch the orbit. Follow the code.' if orbit else 'One acceleration. Two local components.'
-    intro = ('Connect orbital motion, a rotating observer, solar pressure, and the RK4 update in one teaching simulation.' if orbit else 'Keep the physical vector fixed, rotate the satellite’s local axes, and see why the code uses cosine and sine.')
+    title = 'Orbit, forces &amp; look angles' if orbit else 'Solar acceleration components'
+    intro = ('Change the orbit, follow the satellite, and connect each view to the code.' if orbit else 'Change the angles to see one solar push resolved into radial and tangential components.')
     css = (f'<link rel="stylesheet" href="{base}assets/orbit-runtime.css">' if orbit else '')
-    context = ('<p>A separate 48-hour teaching scenario, not an optimized homework solution. The solar view is a geometry close-up of the current angles.</p><a class="site-action" id="inspect-solar" href="./solar/">Inspect these angles in Solar Components</a>' if orbit else '<p id="solar-import-status">Independent geometry demonstration. Use the angle controls or return to the orbit to import a moment.</p><a class="site-action" href="../">Back to Orbit &amp; Code</a>')
+    context = '' if orbit else '<p id="solar-import-status" class="import-status">Independent angle controls. Import a moment from the orbit’s acceleration view.</p>'
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -67,19 +67,59 @@ def shell(view, content):
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
 <header class="site-header">
-<a class="site-brand" href="{base}"><img src="{base}assets/favicon.svg" alt="" width="38" height="38"><span><strong>Orbital HW</strong><small>Physics you can see. Code you can follow.</small></span></a>
 <nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="{base}" {'aria-current="page"' if orbit else ''}>Orbit &amp; Code</a><a data-site-view="solar" href="{base}solar/" {'' if orbit else 'aria-current="page"'}>Solar Components</a></nav>
 </header>
 <main id="main" class="site-main">
-<div class="site-intro"><p class="site-eyebrow">ECE 6390 · Interactive learning lab</p><h1>{title}</h1><p>{intro}</p></div>
-<section class="site-context" aria-label="About this view">{context}</section>
+<div class="site-intro"><h1>{title}</h1><p>{intro}</p></div>
+{context}
 {content}
-<noscript><p>JavaScript is needed for interactive controls. No account or network connection is required once the page is loaded.</p></noscript>
+<noscript><p>Enable JavaScript to use the interactive controls.</p></noscript>
 </main>
-<footer class="site-footer"><span>orbitalHW.jacobdanderson.net · Learning tools, not assignment solutions</span><span>Runs in your browser · No analytics · <a href="{base}source-info.json">Source provenance</a></span></footer>
 </body>
 </html>
 '''
+
+
+def replace_once(text, old, new):
+    """Fail the build if a preserved source no longer matches its adaptation."""
+    assert text.count(old) == 1, f'Expected one source landmark: {old[:80]}'
+    return text.replace(old, new, 1)
+
+
+def learning_layout(orbit, solar):
+    """Simplify presentation without changing the preserved teaching sources."""
+    orbit = replace_once(orbit, '<h2>One orbit, four connected views</h2>',
+                         '<section class="experiment-controls" aria-labelledby="controls-heading"><h2 id="controls-heading">Set up the orbit</h2>')
+    orbit = replace_once(orbit, '<div class="text-small">Based on orbit_sim_math_final.py · 48-hour teaching scenario · no optimized homework orbit · spherical Earth · equatorial motion · no eclipses or thrust</div>', '')
+    orbit = replace_once(orbit, '<span class="text-small">αr = 0.5 · ΩEarth: sidereal day · ΩSun: 365 days</span>', '')
+    orbit = replace_once(orbit, '  <div class="controls-gap">\n    <label class="form-label" for="ol-time">', '  <div class="timeline-controls"><div class="controls-gap">\n    <label class="form-label" for="ol-time">')
+    orbit = replace_once(orbit, '  <div class="legend text-small"', '''  </div>
+  <details class="model-notes"><summary>Model assumptions</summary><p>48 hours of equatorial motion around a spherical Earth; no eclipses or thrust. Reflectivity αr = 0.5. Earth rotates once per sidereal day; the solar push direction rotates once per 365 days.</p></details>
+  </section>
+  <div class="legend text-small"''')
+    orbit = orbit.replace('<h3>', '<h2>').replace('</h3>', '</h2>')
+    orbit = replace_once(orbit, '1 · Orbit and rotating observer', '1 · Orbit &amp; observer')
+    orbit = replace_once(orbit, "2 · Accelerations in the satellite's local axes", '2 · Local accelerations')
+    orbit = replace_once(orbit, '3 · Elevation: the station-satellite plane', '3 · Elevation')
+    orbit = replace_once(orbit, '4 · Azimuth: looking down on the horizon', '4 · Azimuth')
+    orbit = replace_once(orbit, '<div class="readout text-small tabular-nums" id="ol-force-values"></div>', '<div class="readout text-small tabular-nums" id="ol-force-values"></div>\n      <a class="site-action" id="inspect-solar" href="./solar/">Explore these solar components →</a>')
+    orbit = replace_once(orbit, '<hr>\n  <h2>The same state inside update()</h2>', '<section class="lesson-section" aria-labelledby="rk-heading">\n  <h2 id="rk-heading">One integration step: RK4</h2>')
+    orbit = replace_once(orbit, '<hr>\n  <h2>Code flow: searches outside, physics inside</h2>\n  <div class="text-small">Diagram only: density thresholds and optimized designs are not computed here.</div>', '</section>\n  <section class="lesson-section" aria-labelledby="flow-heading">\n  <h2 id="flow-heading">Follow the simulation loop</h2>')
+    # Keep whole-run searches available, but teach the inner physics loop first.
+    outer = re.search(r'  <div class="code-flow">.*?</div>\n  <div class="connector">↓</div>', orbit, re.S)
+    assert outer
+    outer_markup = outer.group(0).rsplit('\n  <div class="connector">', 1)[0]
+    orbit = orbit[:outer.start()] + orbit[outer.end():]
+    orbit = replace_once(orbit, '  <div id="ol-status"', '''  <details class="search-details"><summary>How whole-orbit searches use this loop</summary><p>Each search changes inputs between complete simulation runs. It does not steer the satellite during a run.</p>
+''' + outer_markup + '''
+  </details>
+  </section>
+  <div id="ol-status"''')
+    # Remove the duplicate source title rather than just hiding it with CSS.
+    solar, count = re.subn(r'    <header>.*?</header>', '', solar, count=1, flags=re.S)
+    assert count == 1
+    solar = replace_once(solar, '<footer class="footer">Geometry demonstration, not a trajectory simulation. The dashed circle in the left view is a position-angle guide, not a prediction of the orbit. Positive angles are counterclockwise. + tangential is the direction of increasing θ, not necessarily the direction of the satellite’s velocity.</footer>', '<details class="model-notes"><summary>Reading the diagrams</summary><p>The dashed circle is a position-angle guide, not a predicted orbit. Positive angles are counterclockwise. + tangential means increasing θ, not necessarily the direction of the satellite’s velocity.</p></details>')
+    return orbit, solar
 
 
 def build():
@@ -91,7 +131,8 @@ def build():
     solar_raw = (ROOT / 'src/solar-acceleration-visualizer.html').read_text()
     orbit, orbit_css, orbit_js = extract_document(orbit_raw, 'orbit')
     solar, solar_css, solar_js = extract_document(solar_raw, 'solar')
-    # One landmark belongs to the shared site shell; retain all supplied inner content.
+    orbit, solar = learning_layout(orbit, solar)
+    # One main landmark belongs to the shared site shell.
     solar = solar.replace('<main id="solar-acceleration-app">', '<div id="solar-acceleration-app">').replace('</main>', '</div>')
     orbit_js = orbit_js.replace('window.openai', 'window.orbitalState').replace('openai:set_globals', 'orbitalhw:restore')
     # Do not reuse delta for two different angles across the integrated views.
@@ -110,10 +151,37 @@ def build():
     if (validImport) {
       state.theta = Math.round(Number(incoming[0]));
       state.phi = Math.round(Number(incoming[1]));
-      document.getElementById('solar-import-status').textContent = 'Imported from orbit: angles rounded to the nearest degree. The arrows show normalized components, not force magnitude or a new orbit.';
+      document.getElementById('solar-import-status').textContent = 'Imported from orbit, rounded to the nearest degree. Edit the angles to explore independently.';
     } else if (incoming.some(value => value !== null)) {
-      document.getElementById('solar-import-status').textContent = 'Invalid imported angles were ignored. Showing the original teaching example.';
+      document.getElementById('solar-import-status').textContent = 'Invalid imported angles ignored. Showing the default example.';
     }''')
+    # SVG viewBox scaling must not shrink phone labels to unreadable text.
+    solar_js = replace_once(solar_js, '      const placed = [];', '''      // Reserve the fixed axis labels and Earth before placing moving labels.
+      const svg = byId(ids[0]).ownerSVGElement;
+      const placed = Array.from(svg.querySelectorAll('text'))
+        .filter(label => !ids.includes(label.id))
+        .map(label => label.getBBox());''')
+    solar_js = replace_once(solar_js, '    function drawFixedFrame() {', '''    function sizeDiagramLabels(id) {
+      const svg = byId(id);
+      const scale = Math.min(1, Math.abs(svg.getScreenCTM()?.a || 1));
+      svg.style.setProperty('--diagram-label-size', `${16 / scale}px`);
+      svg.style.setProperty('--diagram-small-size', `${14 / scale}px`);
+    }
+
+    function drawFixedFrame() {
+      sizeDiagramLabels('fixed-svg');''')
+    solar_js = replace_once(solar_js, '    function drawLocalFrame(relative, ar, at) {', '''    function drawLocalFrame(relative, ar, at) {
+      sizeDiagramLabels('local-svg');''')
+    solar_js = replace_once(solar_js, '    // Render before enabling controls.', '''    let diagramWidth = 0;
+    new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      if (Math.abs(width - diagramWidth) > .5) {
+        diagramWidth = width;
+        render();
+      }
+    }).observe(root);
+
+    // Render before enabling controls.''')
     for name, body, css, js in [('orbit', orbit, orbit_css, orbit_js), ('solar', solar, solar_css, solar_js)]:
         write_generated(assets / f'{name}.css', css)
         write_generated(assets / f'{name}.js', js)
