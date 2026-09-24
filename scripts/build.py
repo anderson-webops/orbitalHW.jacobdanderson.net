@@ -42,11 +42,14 @@ def extract_document(source, name):
     return markup, '\n'.join(styles + declarations), '\n'.join(scripts)
 
 
-def shell(view, content):
+def shell(view, content, admin=False):
     orbit = view == 'orbit'
-    base = './' if orbit else '../'
+    assert not admin or orbit, 'The walkthrough belongs to the admin orbit page'
+    base = '../' if admin or not orbit else './'
+    orbit_link = './' if admin else base
+    orbit_label = 'Orbit &amp; Code' if admin else 'Orbit'
     title = 'Orbit, forces &amp; look angles' if orbit else 'Solar acceleration components'
-    intro = ('Change the orbit, follow the satellite, and connect each view to the code.' if orbit else 'Change the angles to see one solar push resolved into radial and tangential components.')
+    intro = (('Change the orbit, follow the satellite, and connect each view to the code.' if admin else 'Change the orbit and follow the satellite’s forces and look angles.') if orbit else 'Change the angles to see one solar push resolved into radial and tangential components.')
     css = (f'<link rel="stylesheet" href="{base}assets/orbit-runtime.css">' if orbit else '')
     context = '' if orbit else '<p id="solar-import-status" class="import-status">Independent angle controls. Import a moment from the orbit’s acceleration view.</p>'
     return f'''<!doctype html>
@@ -56,8 +59,9 @@ def shell(view, content):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Interactive orbital physics, solar acceleration components, look angles and RK4 code learning tools.">
 <meta name="referrer" content="no-referrer">
+{'<meta name="robots" content="noindex">' if admin else ''}
 <meta http-equiv="Content-Security-Policy" content="{CSP}">
-<title>{'Orbit & Code' if orbit else 'Solar Components'} | Orbital HW</title>
+<title>{orbit_label if orbit else 'Solar Components'} | Orbital HW</title>
 <link rel="icon" href="{base}assets/favicon.svg" type="image/svg+xml">
 {css}<link rel="stylesheet" href="{base}assets/{view}.css">
 <link rel="stylesheet" href="{base}assets/site.css">
@@ -67,7 +71,7 @@ def shell(view, content):
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
 <header class="site-header">
-<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="{base}" {'aria-current="page"' if orbit else ''}>Orbit &amp; Code</a><a data-site-view="solar" href="{base}solar/" {'' if orbit else 'aria-current="page"'}>Solar Components</a></nav>
+<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="{orbit_link}" {'aria-current="page"' if orbit else ''}>{orbit_label}</a><a data-site-view="solar" href="{base}solar/" {'' if orbit else 'aria-current="page"'}>Solar Components</a></nav>
 </header>
 <main id="main" class="site-main">
 <div class="site-intro"><h1>{title}</h1><p>{intro}</p></div>
@@ -127,14 +131,24 @@ def build():
     assets = dest / 'assets'
     assets.mkdir(parents=True, exist_ok=True)
     (dest / 'solar').mkdir(exist_ok=True)
+    (dest / 'admin').mkdir(exist_ok=True)
     orbit_raw = (ROOT / 'src/orbit.html').read_text()
     solar_raw = (ROOT / 'src/solar-acceleration-visualizer.html').read_text()
     orbit, orbit_css, orbit_js = extract_document(orbit_raw, 'orbit')
     solar, solar_css, solar_js = extract_document(solar_raw, 'solar')
     orbit, solar = learning_layout(orbit, solar)
+    # Build a real public page without walkthrough markup, not a CSS-only gate.
+    walkthrough_start = '<section class="lesson-section" aria-labelledby="rk-heading">'
+    walkthrough_end = '<div id="ol-status"'
+    assert orbit.count(walkthrough_start) == orbit.count(walkthrough_end) == 1
+    public_orbit = orbit.split(walkthrough_start, 1)[0] + walkthrough_end + orbit.split(walkthrough_end, 1)[1]
+    admin_orbit = replace_once(orbit, 'id="inspect-solar" href="./solar/"', 'id="inspect-solar" href="../solar/"')
     # One main landmark belongs to the shared site shell.
     solar = solar.replace('<main id="solar-acceleration-app">', '<div id="solar-acceleration-app">').replace('</main>', '</div>')
     orbit_js = orbit_js.replace('window.openai', 'window.orbitalState').replace('openai:set_globals', 'orbitalhw:restore')
+    # Public and admin views share identical physics, but not walkthrough DOM.
+    orbit_js = replace_once(orbit_js, '    function panelRK(row){', "    function panelRK(row){\n      if (!$('rk-svg')) return;")
+    orbit_js = replace_once(orbit_js, '    function highlight(){', "    function highlight(){if (!$('code-detail')) return;")
     # Do not reuse delta for two different angles across the integrated views.
     orbit_js = orbit_js.replace("cfg.frame==='earth'?'δ':'θ'", "cfg.frame==='earth'?'Δλ':'θ'")
     draw_end = "highlight();$('error').hidden=true;"
@@ -182,10 +196,11 @@ def build():
     }).observe(root);
 
     // Render before enabling controls.''')
-    for name, body, css, js in [('orbit', orbit, orbit_css, orbit_js), ('solar', solar, solar_css, solar_js)]:
+    for name, body, css, js in [('orbit', public_orbit, orbit_css, orbit_js), ('solar', solar, solar_css, solar_js)]:
         write_generated(assets / f'{name}.css', css)
         write_generated(assets / f'{name}.js', js)
         write_generated(dest / ('index.html' if name == 'orbit' else 'solar/index.html'), shell(name, body))
+    write_generated(dest / 'admin/index.html', shell('orbit', admin_orbit, admin=True))
     for name in ['site.css', 'site.js', 'favicon.svg', 'orbit-runtime.css']:
         shutil.copyfile(ROOT / 'src' / name, assets / name)
     (dest / '_headers').write_text('/*\n  Content-Security-Policy: ' + CSP + "; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-cache\n")
@@ -194,7 +209,7 @@ def build():
     for name in ['orbit.html', 'solar-acceleration-visualizer.html']:
         provenance['source_sha256'][name] = hashlib.sha256((ROOT / 'src' / name).read_bytes()).hexdigest()
     (dest / 'source-info.json').write_text(json.dumps(provenance, indent=2) + '\n')
-    print('Built two static pages; all scripts and styles are local.')
+    print('Built public orbit, solar, and admin walkthrough pages; all assets are local.')
 
 
 if __name__ == '__main__':

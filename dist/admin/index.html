@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Interactive orbital physics, solar acceleration components, look angles and RK4 code learning tools.">
 <meta name="referrer" content="no-referrer">
-
+<meta name="robots" content="noindex">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
-<title>Orbit | Orbital HW</title>
-<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./assets/orbit-runtime.css"><link rel="stylesheet" href="./assets/orbit.css">
-<link rel="stylesheet" href="./assets/site.css">
-<script src="./assets/site.js" defer></script>
-<script src="./assets/orbit.js" defer></script>
+<title>Orbit &amp; Code | Orbital HW</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/orbit-runtime.css"><link rel="stylesheet" href="../assets/orbit.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/orbit.js" defer></script>
 </head>
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
 <header class="site-header">
-<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="./" aria-current="page">Orbit</a><a data-site-view="solar" href="./solar/" >Solar Components</a></nav>
+<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="./" aria-current="page">Orbit &amp; Code</a><a data-site-view="solar" href="../solar/" >Solar Components</a></nav>
 </header>
 <main id="main" class="site-main">
-<div class="site-intro"><h1>Orbit, forces &amp; look angles</h1><p>Change the orbit and follow the satellite’s forces and look angles.</p></div>
+<div class="site-intro"><h1>Orbit, forces &amp; look angles</h1><p>Change the orbit, follow the satellite, and connect each view to the code.</p></div>
 
 <div id="orbit-learning-lab">
 
@@ -73,7 +73,7 @@
       <h2>2 · Local accelerations</h2>
       <svg class="scene" id="ol-force-svg" role="img" aria-label="Solar acceleration decomposed into radial and tangential parts; gravity points inward"></svg>
       <div class="readout text-small tabular-nums" id="ol-force-values"></div>
-      <a class="site-action" id="inspect-solar" href="./solar/">Explore these solar components →</a>
+      <a class="site-action" id="inspect-solar" href="../solar/">Explore these solar components →</a>
     </figure>
     <figure>
       <h2>3 · Elevation</h2>
@@ -86,6 +86,39 @@
       <div class="readout text-small tabular-nums" id="ol-azimuth-values"></div>
     </figure>
   </div>
+  <section class="lesson-section" aria-labelledby="rk-heading">
+  <h2 id="rk-heading">One integration step: RK4</h2>
+  <div class="stage-list" id="ol-stages" aria-label="RK4 trial stages">
+    <button class="btn" data-stage="0" type="button" aria-pressed="true">k1 · start</button>
+    <button class="btn" data-stage="1" type="button" aria-pressed="false">k2 · midpoint</button>
+    <button class="btn" data-stage="2" type="button" aria-pressed="false">k3 · revised midpoint</button>
+    <button class="btn" data-stage="3" type="button" aria-pressed="false">k4 · trial endpoint</button>
+  </div>
+  <svg class="scene" id="ol-rk-svg" role="img" aria-label="Four Runge-Kutta trial evaluations produce a weighted candidate; endpoint validation occurs before the single state commit"></svg>
+  <div class="readout text-small tabular-nums" id="ol-derivative-values"></div>
+  <div class="readout text-small tabular-nums" id="ol-storage-values"></div>
+  </section>
+  <section class="lesson-section" aria-labelledby="flow-heading">
+  <h2 id="flow-heading">Follow the simulation loop</h2>
+
+  <div class="viz-row"><button class="btn" type="button" data-lens="simulate">simulate() → new OrbitSim</button><span class="text-small">Current state: r, theta, Vr, omega, time</span></div>
+  <div class="connector">↓</div>
+  <div class="loop">
+    <div><button class="btn" type="button" data-lens="geometry">① Look angles</button><div class="code-label text-small">gamma → calcAz / adjAz · acos magnitude + isVisible sign</div></div>
+    <div><button class="btn" type="button" data-lens="metrics">② Measure / record</button><div class="code-label text-small">Unwrap → max_drift → min_elevation → rows</div></div>
+    <div><button class="btn" type="button" data-lens="rk4">③ Advance one dt</button><div class="code-label text-small">set_t → update → derivatives × 4 → RK4</div></div>
+    <div><button class="btn" type="button" data-lens="commit">④ Validate / commit</button><div class="code-label text-small">Endpoint guard → store state → time += dt</div></div>
+  </div>
+  <div class="connector text-small">↺ More time: back to ① · End: return summaries + optional arrays → plots</div>
+  <div class="selected-code text-small" id="ol-code-detail" aria-live="polite">Select a code stage to highlight its physical quantities.</div>
+  <details class="search-details"><summary>How whole-orbit searches use this loop</summary><p>Each search changes inputs between complete simulation runs. It does not steer the satellite during a run.</p>
+  <div class="code-flow">
+    <div><button class="btn" type="button" data-lens="baseline">main() → baseline</button><div class="code-label text-small">Gravity-only GEO check</div></div>
+    <div><button class="btn" type="button" data-lens="density">density_thresholds()</button><div class="code-label text-small">Bracket density → brentq → repeated runs</div></div>
+    <div><button class="btn" type="button" data-lens="design">design_orbit()</button><div class="code-label text-small">Initial r, Vr, a → DE → Powell → repeated runs</div></div>
+  </div>
+  </details>
+  </section>
   <div id="ol-status" class="sr-only" aria-live="polite"></div>
   <div id="ol-error" class="text-destructive" role="alert" hidden></div>
 

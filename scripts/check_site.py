@@ -38,7 +38,7 @@ class Page(HTMLParser):
 
 def check():
     dist = ROOT / 'dist'
-    required = ['index.html', 'solar/index.html', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
+    required = ['index.html', 'solar/index.html', 'admin/index.html', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
     for name in required:
         assert (dist / name).is_file(), f'Missing required artifact: {name}'
     for file in dist.rglob('*.html'):
@@ -49,6 +49,11 @@ def check():
         assert page.csp and "script-src 'self'" in page.csp and "style-src 'self'" in page.csp
         assert 'unsafe-inline' not in page.csp and 'unsafe-eval' not in page.csp
         assert 'data-site-view="orbit"' in text and 'data-site-view="solar"' in text
+        walkthrough = ['rk-heading', 'ol-rk-svg', 'ol-stages', 'flow-heading', 'ol-code-detail']
+        if file == dist / 'admin/index.html':
+            assert all(name in page.ids for name in walkthrough), 'Admin walkthrough is incomplete'
+        else:
+            assert not any(name in page.ids for name in walkthrough), 'Walkthrough leaked onto a public page'
         for url in page.assets:
             parsed = urlsplit(url)
             if url.startswith('#'):
@@ -60,6 +65,8 @@ def check():
             if target.is_dir():
                 target /= 'index.html'
             assert target.is_file(), f'Missing linked file {url}'
+            if file != dist / 'admin/index.html':
+                assert target != dist / 'admin/index.html', 'Admin must not be linked from public navigation'
     for file in dist.rglob('*'):
         if not file.is_file():
             continue

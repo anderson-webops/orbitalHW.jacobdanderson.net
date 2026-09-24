@@ -108,13 +108,34 @@ async function assertNoOverflow(page) {
   return sizes;
 }
 
-async function assertNativeNavigation(page) {
-  for (const [view, pathname] of [['orbit', '/'], ['solar', '/solar/']]) {
+async function assertNativeNavigation(page, admin = false) {
+  for (const [view, pathname] of [['orbit', admin ? '/admin/' : '/'], ['solar', '/solar/']]) {
     const link = page.locator(`a[data-site-view="${view}"]`).first();
     assert.equal(await link.count(), 1, `Missing native ${view} navigation link`);
     const target = new URL(await link.getAttribute('href'), page.url());
     assert.equal(target.origin, base.origin);
     assert.equal(target.pathname, pathname);
+  }
+}
+
+async function assertWalkthroughRoute(page, admin = false) {
+  for (const selector of ['#rk-heading', '#ol-stages', '#ol-rk-svg', '#ol-derivative-values',
+    '#ol-storage-values', '#flow-heading', '#ol-code-detail', 'details.search-details']) {
+    assert.equal(await page.locator(selector).count(), admin ? 1 : 0,
+      `${selector} must ${admin ? 'exist on /admin/' : 'be absent, not just hidden, on the public page'}`);
+  }
+  assert.equal(await page.locator('[data-stage]').count(), admin ? 4 : 0);
+  assert.equal(await page.locator('[data-lens]').count(), admin ? 8 : 0);
+  if (!admin) {
+    const adminLinks = await page.locator('a[href]').evaluateAll(links => links.filter(link =>
+      new URL(link.href).pathname.startsWith('/admin')).map(link => link.href));
+    assert.deepEqual(adminLinks, [], 'Public navigation must not advertise the admin route');
+    for (const id of ['orbit', 'force', 'elevation', 'azimuth']) {
+      const diagram = page.locator(`#ol-${id}-svg`);
+      assert.equal(await diagram.isVisible(), true, `Public ${id} diagram must remain visible`);
+      assert.equal(await diagram.evaluate(element => getComputedStyle(element).opacity), '1',
+        `A saved admin lens must not dim the public ${id} diagram`);
+    }
   }
 }
 
@@ -197,6 +218,7 @@ try {
     await navigate(page, '/');
     await orbitReady(page);
     await assertNativeNavigation(page);
+    await assertWalkthroughRoute(page);
     assert.equal(await page.locator('#orbit-learning-lab iframe').count(), 0, 'Orbit should be integrated directly');
     for (const selector of ['#ol-play', '#ol-time', '#ol-orbit', '#ol-frame', '#ol-density', '#ol-step', '#ol-solar', '#ol-phase']) {
       assert.equal(await page.locator(selector).isEnabled(), true, `${selector} is not enabled`);
@@ -204,6 +226,17 @@ try {
     assert.equal(await page.locator('#ol-orbit-svg').locator('path').count() > 0, true);
     await assertNoOverflow(page);
     await page.screenshot({ path: path.join(output, 'orbit-desktop-light.png'), fullPage: true });
+  });
+
+  await check('Public query strings and fragments do not reveal the code walkthrough', async () => {
+    for (const pathname of ['/?admin=true', '/#admin', '/?admin=true#admin']) {
+      await navigate(page, pathname);
+      await orbitReady(page);
+      await assertWalkthroughRoute(page);
+      await assertNativeNavigation(page);
+    }
+    await navigate(page, '/');
+    await orbitReady(page);
   });
 
   await check('Orbit uses a clear outline while keeping the physical model assumptions', async () => {
@@ -220,12 +253,27 @@ try {
     return assertReadableContent(page);
   });
 
-  await check('Orbit controls, code lens, and RK4 selection update the active state', async () => {
+  await check('Public orbit controls update the physical state without code panels', async () => {
     await page.selectOption('#ol-density', '5');
     await page.selectOption('#ol-step', '300');
     await page.selectOption('#ol-frame', 'earth');
     await range(page, '#ol-phase', 75);
     await range(page, '#ol-time', 12.5);
+    const { config } = await orbitSnapshot(page);
+    assert.deepEqual({ density: config.density, step: config.step, frame: config.frame,
+      phase: config.phase, hours: config.hours },
+    { density: 5, step: 300, frame: 'earth', phase: 75, hours: 12.5 });
+    assert.match(await page.locator('#ol-orbit-svg').textContent(), /Earth-fixed/);
+    await assertWalkthroughRoute(page);
+  });
+
+  await check('Admin route retains the code lens and RK4 walkthrough', async () => {
+    await navigate(page, '/admin');
+    await orbitReady(page);
+    assert.equal(new URL(page.url()).pathname, '/admin/');
+    await assertNativeNavigation(page, true);
+    await assertWalkthroughRoute(page, true);
+    await assertLearningOutline(page, 'Orbit, forces & look angles');
     await page.locator('[data-stage="2"]').click();
     await page.locator('[data-lens="geometry"]').click();
     const { config } = await orbitSnapshot(page);
@@ -247,7 +295,7 @@ try {
     await page.locator('details.search-details > summary').click();
   });
 
-  await check('Orbit settings and selected learning state survive reload', async () => {
+  await check('Admin settings and selected code learning state survive reload', async () => {
     const before = (await orbitSnapshot(page)).config;
     await page.reload({ waitUntil: 'networkidle' });
     await orbitReady(page);
@@ -255,6 +303,24 @@ try {
     for (const key of ['orbit', 'frame', 'density', 'step', 'solar', 'phase', 'hours', 'stage', 'lens']) {
       assert.equal(after[key], before[key], `${key} was not preserved`);
     }
+    await assertWalkthroughRoute(page, true);
+  });
+
+  await check('Returning from admin preserves physics settings without dimming public diagrams', async () => {
+    const before = (await orbitSnapshot(page)).config;
+    assert.equal(before.lens, 'geometry', 'Regression setup must save a non-default admin lens');
+    await navigate(page, '/');
+    await orbitReady(page);
+    const after = (await orbitSnapshot(page)).config;
+    for (const key of ['orbit', 'frame', 'density', 'step', 'solar', 'phase', 'hours']) {
+      assert.equal(after[key], before[key], `${key} was not retained when leaving admin`);
+    }
+    await assertWalkthroughRoute(page);
+    await range(page, '#ol-time', 13);
+    await assertWalkthroughRoute(page);
+    await page.reload({ waitUntil: 'networkidle' });
+    await orbitReady(page);
+    await assertWalkthroughRoute(page);
   });
 
   await check('Playback advances and pause stops it', async () => {
@@ -281,12 +347,31 @@ try {
     closeTo(state[3], constants.OE, 1e-12, 'Earth-matched angular rate');
     closeTo(state[1] - constants.OE * time, 0, 1e-8, 'Earth-relative longitude');
     closeTo(geometry.az, Math.PI, 1e-8, 'Atlanta baseline azimuth');
+    await range(page, '#ol-time', 12);
+    const zeroForce = await page.locator('#ol-force-values').innerText();
+    assert.match(zeroForce, /aSRP 0\.000e\+0/);
+  });
+
+  await check('Admin RK4 stages handle the final simulation endpoint and native navigation', async () => {
+    await navigate(page, '/admin/');
+    await orbitReady(page);
+    await range(page, '#ol-time', 48);
     assert.equal(await page.locator('[data-stage="0"]').isDisabled(), true);
     assert.match(await page.locator('#ol-rk-svg').textContent(), /No update after the endpoint/);
     await range(page, '#ol-time', 12);
     assert.equal(await page.locator('[data-stage="0"]').isEnabled(), true);
-    const zeroForce = await page.locator('#ol-force-values').innerText();
-    assert.match(zeroForce, /aSRP 0\.000e\+0/);
+    await page.locator('a[data-site-view="orbit"]').first().click();
+    await page.waitForURL(url('/admin/'));
+    await orbitReady(page);
+    await assertWalkthroughRoute(page, true);
+    await page.locator('a[data-site-view="solar"]').first().click();
+    await page.waitForURL(url('/solar/'));
+    await solarReady(page);
+    await assertNativeNavigation(page);
+    await page.locator('a[data-site-view="orbit"]').first().click();
+    await page.waitForURL(url('/'));
+    await orbitReady(page);
+    await assertWalkthroughRoute(page);
   });
 
   await check('Solar transfer link carries the current inertial angle pair', async () => {
@@ -430,15 +515,18 @@ try {
     await solarReady(page);
   });
 
-  await check('Both pages fit narrow mobile and tablet screens in light and dark themes', async () => {
+  await check('Public, admin, and solar pages fit mobile and tablet screens in both themes', async () => {
     const dimensions = [];
     for (const scheme of ['light', 'dark']) {
       await page.emulateMedia({ colorScheme: scheme });
       for (const width of [320, 390, 768, 1440]) {
         await page.setViewportSize({ width, height: 1000 });
-        for (const [name, pathname] of [['orbit', '/'], ['solar', '/solar/']]) {
+        for (const [name, pathname] of [['orbit', '/'], ['admin', '/admin/'], ['solar', '/solar/']]) {
           await navigate(page, pathname);
-          if (name === 'orbit') await orbitReady(page); else await solarReady(page);
+          if (name === 'solar') await solarReady(page); else {
+            await orbitReady(page);
+            await assertWalkthroughRoute(page, name === 'admin');
+          }
           await page.waitForTimeout(150);
           const size = await assertNoOverflow(page);
           const readability = await assertReadableContent(page);

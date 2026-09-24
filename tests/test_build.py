@@ -18,8 +18,18 @@ class PageOutline(HTMLParser):
         super().__init__()
         self.headings = []
         self.heading = None
+        self.ids = set()
+        self.links = []
+        self.assets = []
 
     def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if attrs.get('id'):
+            self.ids.add(attrs['id'])
+        if tag == 'a':
+            self.links.append(attrs)
+        if tag in ['script', 'link']:
+            self.assets.append(attrs.get('src') or attrs.get('href', ''))
         if re.fullmatch(r'h[1-6]', tag):
             self.heading = [int(tag[1]), '']
 
@@ -55,8 +65,8 @@ class BuildTests(unittest.TestCase):
         self.assertNotIn('/ class=', body)
 
     def test_native_links_and_strict_csp(self):
-        for name in ['orbit', 'solar']:
-            page = build.shell(name, '<div>example</div>')
+        for name, admin in [('orbit', False), ('solar', False), ('orbit', True)]:
+            page = build.shell(name, '<div>example</div>', admin=admin)
             self.assertIn('data-site-view="orbit"', page)
             self.assertIn('data-site-view="solar"', page)
             self.assertIn("script-src 'self'", page)
@@ -77,6 +87,7 @@ class BuildTests(unittest.TestCase):
 
     def test_built_pages_have_a_clean_heading_hierarchy(self):
         titles = {'index.html': 'Orbit, forces & look angles',
+                  'admin/index.html': 'Orbit, forces & look angles',
                   'solar/index.html': 'Solar acceleration components'}
         old_titles = {'One orbit, four connected views',
                       'One acceleration. Two local components.',
@@ -94,6 +105,43 @@ class BuildTests(unittest.TestCase):
                     self.assertTrue(text, 'Headings need meaningful text')
                     self.assertNotIn(text, old_titles)
                     previous = level
+
+    def test_code_walkthrough_exists_only_in_admin_orbit_page(self):
+        required_diagrams = {'ol-orbit-svg', 'ol-force-svg', 'ol-elevation-svg', 'ol-azimuth-svg'}
+        walkthrough_ids = {'rk-heading', 'ol-stages', 'ol-rk-svg', 'ol-derivative-values',
+                           'ol-storage-values', 'flow-heading', 'ol-code-detail'}
+        for filename, admin in [('index.html', False), ('admin/index.html', True)]:
+            with self.subTest(page=filename):
+                page = (ROOT / 'dist' / filename).read_text()
+                outline = PageOutline()
+                outline.feed(page)
+                self.assertTrue(required_diagrams <= outline.ids)
+                self.assertEqual(walkthrough_ids & outline.ids, walkthrough_ids if admin else set())
+                self.assertEqual('data-lens=' in page, admin)
+                self.assertEqual('search-details' in page, admin)
+                self.assertIn('id="ol-error"', page)
+                self.assertIn('id="ol-status"', page)
+
+    def test_admin_navigation_and_assets_resolve_without_public_admin_links(self):
+        from urllib.parse import urljoin, urlparse
+        for filename, pathname in [('index.html', '/'), ('solar/index.html', '/solar/'),
+                                   ('admin/index.html', '/admin/')]:
+            with self.subTest(page=filename):
+                outline = PageOutline()
+                outline.feed((ROOT / 'dist' / filename).read_text())
+                location = 'https://example.test' + pathname
+                links = {link.get('data-site-view'): urlparse(urljoin(location, link.get('href', ''))).path
+                         for link in outline.links if link.get('data-site-view')}
+                self.assertEqual(links['orbit'], '/admin/' if pathname == '/admin/' else '/')
+                self.assertEqual(links['solar'], '/solar/')
+                if pathname != '/admin/':
+                    self.assertFalse(any(urlparse(urljoin(location, link.get('href', ''))).path.startswith('/admin')
+                                         for link in outline.links))
+                self.assertTrue(outline.assets)
+                for asset in outline.assets:
+                    resolved = urlparse(urljoin(location, asset))
+                    self.assertEqual(resolved.netloc, 'example.test')
+                    self.assertTrue((ROOT / 'dist' / resolved.path.lstrip('/')).is_file(), asset)
 
     def test_original_source_bytes_are_preserved(self):
         expected = {

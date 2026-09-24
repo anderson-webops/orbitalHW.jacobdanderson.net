@@ -11,6 +11,8 @@ python3 scripts/serve.py --port 4178
 
 Open `http://127.0.0.1:4178`. There is no site dependency installation, database, or backend. The site makes no external requests. Browser storage is optional and used only to retain orbit controls.
 
+The main page shows the orbital physics views. Open `/admin` (normally redirected to `/admin/`) to also see the RK4 and simulation-code walkthrough. Public pages do not link to this route or contain its walkthrough markup. This is a presentation split, not authentication: anyone with the URL can open it.
+
 ## Validate
 
 ```sh

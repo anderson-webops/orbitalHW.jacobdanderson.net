@@ -1,6 +1,6 @@
 {
   "name": "orbitalhw.jacobdanderson.net",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "engines": { "node": ">=24.18.1 <25" },
