@@ -1,5 +1,10 @@
 # Orbital HW
 
+## GitGuardian Availability
+
+- Use GitGuardian/`ggshield` when available. Quota, authentication, network, or service failures are not commit or push blockers. Record the scan as unavailable, review staged and outgoing changes, run an available independent local secret scan, and proceed with the other required checks. Never ignore a confirmed secret finding or claim a failed scan passed.
+- If only the global GitGuardian hook blocks delivery, inspect it for other checks, then use a command-scoped `core.hooksPath` pointing to the repository's own hooks for that commit or push. Do not disable hooks globally or skip unrelated checks.
+
 - Local, static teaching site. Serve only `dist/`; no backend, accounts, analytics, or provider calls.
 - Read parent Sites/AGENTS.md. No DNS, remote repository creation, or production deployment without separate authority.
 - The original supplied visualizations are preserved in `src/`. Adaptations belong in `scripts/build.py`, shared assets, and tests.
