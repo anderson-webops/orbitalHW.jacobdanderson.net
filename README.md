@@ -22,7 +22,7 @@ npm run validate
 ORBITALHW_URL=http://127.0.0.1:4178 npm run test:browser
 ```
 
-Browser tests need Playwright; set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `QA_OUTPUT` to a repository-local evidence directory if it is not installed locally. Set `PLAYWRIGHT_CHANNEL=chrome` to use an existing Chrome installation. Use Node 24.18.1 and npm 12.0.2 for those commands.
+Browser tests need Playwright; set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `QA_OUTPUT` to a repository-local evidence directory if it is not installed locally. Set `PLAYWRIGHT_CHANNEL=chrome` to use an existing Chrome installation. Use Node 26.13.0 and npm 12.2.1 for those commands.
 
 ## Structure and provenance
 
