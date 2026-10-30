@@ -1,6 +1,6 @@
 # Orbital HW
 
-Local source for `orbitalHW.jacobdanderson.net`. Two connected, browser-only learning tools: Orbit & Code and Solar Components. The orbit-to-solar link transfers the current direction angles, rounded to the attached tool's whole-degree inputs.
+Local source for `orbitalHW.jacobdanderson.net`. Browser-only learning tools: Orbit & Code, Solar Components, and a 34-concept Course Lab. The orbit-to-solar link transfers the current direction angles, rounded to the attached tool's whole-degree inputs.
 
 ## Run
 
@@ -11,7 +11,7 @@ python3 scripts/serve.py --port 4178
 
 Open `http://127.0.0.1:4178`. There is no site dependency installation, database, or backend. The site makes no external requests. Browser storage is optional and used only to retain orbit controls.
 
-The main page shows the orbital physics views. Open `/admin` (normally redirected to `/admin/`) to also see the RK4 and simulation-code walkthrough. Public pages do not link to this route or contain its walkthrough markup. This is a presentation split, not authentication: anyone with the URL can open it.
+The main page shows the orbital physics views. Open `/lab/` for tabbed experiments in orbits and look angles, spacecraft systems, waves and fields, RF links, and antennas. Open `/admin` (normally redirected to `/admin/`) to also see the RK4 and simulation-code walkthrough. Public pages do not link to this route or contain its walkthrough markup. This is a presentation split, not authentication: anyone with the URL can open it.
 
 The Sun-centered overview and enlarged Earth neighborhood share the existing simulation's time, satellite state and solar-direction phase. They remain space-fixed even when Orbit & observer uses the Earth-fixed camera. The Sun-to-Earth direction represents the prescribed push away from the Sun, not a new heliocentric integration or a calendar ephemeris. The original integrator and equations are unchanged.
 
@@ -22,11 +22,11 @@ npm run validate
 ORBITALHW_URL=http://127.0.0.1:4178 npm run test:browser
 ```
 
-Browser tests need Playwright; set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `QA_OUTPUT` to a repository-local evidence directory if it is not installed locally. Use Node 24.18.1 and npm 12.0.2 for those commands.
+Browser tests need Playwright; set `PLAYWRIGHT_MODULE` to an existing Playwright module path and `QA_OUTPUT` to a repository-local evidence directory if it is not installed locally. Set `PLAYWRIGHT_CHANNEL=chrome` to use an existing Chrome installation. Use Node 24.18.1 and npm 12.0.2 for those commands.
 
 ## Structure and provenance
 
-`src/orbit.html` and `src/solar-acceleration-visualizer.html` retain the supplied sources. `scripts/build.py` extracts local assets and applies only site integration changes. `dist/` is the complete static deployment tree. Shared presentation follows the minimal Vitesse Lite approach; the no-framework static delivery convention matches the local Liar's Dice site. Source hashes and adaptations are listed in `dist/source-info.json`.
+`src/orbit.html`, `src/solar-acceleration-visualizer.html`, and `src/course-lab.html` retain the supplied sources. `scripts/build.py` extracts local assets and applies only site integration changes. `dist/` is the complete static deployment tree. Shared presentation follows the minimal Vitesse Lite approach; the no-framework static delivery convention matches the local Liar's Dice site. Source hashes and adaptations are listed in `dist/source-info.json`.
 
 This is a learning visualization, not a solver for homework thresholds or the optimized assignment orbit. The Solar Components page demonstrates geometry, not time integration. Imported angles are approximate to one degree, and its normalized arrows do not compare force magnitudes.
 

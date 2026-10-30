@@ -38,7 +38,7 @@ class Page(HTMLParser):
 
 def check():
     dist = ROOT / 'dist'
-    required = ['index.html', 'solar/index.html', 'admin/index.html', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/sun-view.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
+    required = ['index.html', 'solar/index.html', 'admin/index.html', 'lab/index.html', 'assets/course-lab.js', 'assets/course-lab.css', 'assets/site.js', 'assets/site.css', 'assets/orbit.js', 'assets/sun-view.js', 'assets/orbit.css', 'assets/solar.js', 'assets/solar.css', 'assets/orbit-runtime.css', 'assets/favicon.svg', '_headers', 'source-info.json']
     for name in required:
         assert (dist / name).is_file(), f'Missing required artifact: {name}'
     for file in dist.rglob('*.html'):
@@ -48,7 +48,7 @@ def check():
         assert len(page.ids) == len(set(page.ids)), f'Duplicate IDs in {file.name}'
         assert page.csp and "script-src 'self'" in page.csp and "style-src 'self'" in page.csp
         assert 'unsafe-inline' not in page.csp and 'unsafe-eval' not in page.csp
-        assert 'data-site-view="orbit"' in text and 'data-site-view="solar"' in text
+        assert all(f'data-site-view="{name}"' in text for name in ('orbit', 'solar', 'lab'))
         walkthrough = ['rk-heading', 'ol-rk-svg', 'ol-stages', 'flow-heading', 'ol-code-detail']
         if file == dist / 'admin/index.html':
             assert all(name in page.ids for name in walkthrough), 'Admin walkthrough is incomplete'

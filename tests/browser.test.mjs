@@ -328,7 +328,7 @@ async function assertLearningOutline(page, title) {
 
 await mkdir(output, { recursive: true });
 try {
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   const desktop = await context({ colorScheme: 'light', reducedMotion: 'no-preference' });
   const page = await desktop.newPage();
 

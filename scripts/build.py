@@ -1,4 +1,4 @@
-"""Build the two supplied teaching tools into a dependency-free static site."""
+"""Build the supplied teaching tools into a dependency-free static site."""
 from pathlib import Path
 import hashlib
 import html
@@ -72,7 +72,7 @@ def shell(view, content, admin=False):
 <body>
 <a class="site-skip" href="#main">Skip to the visualization</a>
 <header class="site-header">
-<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="{orbit_link}" {'aria-current="page"' if orbit else ''}>{orbit_label}</a><a data-site-view="solar" href="{base}solar/" {'' if orbit else 'aria-current="page"'}>Solar Components</a></nav>
+<nav class="site-nav" aria-label="Learning tools"><a data-site-view="orbit" href="{orbit_link}" {'aria-current="page"' if orbit else ''}>{orbit_label}</a><a data-site-view="solar" href="{base}solar/" {'' if orbit else 'aria-current="page"'}>Solar Components</a><a data-site-view="lab" href="{base}lab/">Course Lab</a></nav>
 </header>
 <main id="main" class="site-main">
 <div class="site-intro"><h1>{title}</h1><p>{intro}</p></div>
@@ -89,6 +89,62 @@ def replace_once(text, old, new):
     """Fail the build if a preserved source no longer matches its adaptation."""
     assert text.count(old) == 1, f'Expected one source landmark: {old[:80]}'
     return text.replace(old, new, 1)
+
+
+def course_lab(source):
+    """Keep the imported lab intact while satisfying the site's strict CSP."""
+    markup, css, js = extract_document(source, 'course-lab')
+    js = replace_once(js, 'style="fill:${color}"', 'fill="${color}"')
+    js = replace_once(js,
+                      '<i style="border-color:${q.color||C.a};${q.dash?\'border-top-style:dashed\':\'\'}"></i>',
+                      '<svg class="legend-key" viewBox="0 0 22 6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="${q.color||C.a}" stroke-width="3" stroke-dasharray="${q.dash?\'5 3\':\'none\'}"/></svg>')
+    # Internal authoring paths do not help a visitor identify course sources.
+    js = replace_once(js, ".map(s=>`<li>${esc(s)}</li>`)",
+                      ".map(s=>`<li>${esc(sourceLabel(s))}</li>`)")
+    js = replace_once(js, "const groups=[", """function sourceLabel(source) {
+  if (source.includes('Yn-MEMaiA0Y')) return 'WAV01: Maxwell’s equations';
+  if (source.includes('R3KHaRWzpFM')) return 'WAV02: Helmholtz wave equation';
+  if (source.includes('1V26Yr5KzW8')) return 'WAV03: Plane waves';
+  if (source.includes('orbits.json')) return 'Course guided reading: astrodynamics and look angles';
+  if (source.includes('subsystems.json')) return 'Course guided reading: spacecraft subsystems';
+  if (source.includes('radio.json')) return 'Course guided reading: RF systems and propagation';
+  if (source.includes('waves_antennas.json')) return 'Course guided reading: waves and wire antennas';
+  if (source.includes('orbit_sim_math_final.py')) return 'Polar orbit model: derivatives, RK4 and observer geometry';
+  if (source.includes('Double Curl')) return 'Analytic sinusoidal double-curl example';
+  if (source.includes('2026-10-27')) return 'October 22 and 27 course notes: apertures and introductory arrays';
+  return 'Supplied course notes and guided reading';
+}
+const groups=[""")
+    css += '''
+.legend .legend-key { display:inline-block; width:22px; min-width:22px; height:6px; flex:none; }
+.lab-site-header { max-width:1204px; margin:0 auto; padding:18px 0 0; }
+.lab-site-tabs { display:flex; flex-wrap:wrap; gap:5px; border-bottom:1px solid var(--line); }
+.lab-site-tabs a { display:inline-flex; align-items:center; min-height:44px; padding:9px 15px; color:var(--muted); background:var(--soft); border:1px solid var(--line); border-bottom:0; border-radius:8px 8px 0 0; text-decoration:none; }
+.lab-site-tabs a[aria-current=page] { color:var(--ink); background:var(--surface); box-shadow:inset 0 3px var(--a); font-weight:650; }
+.lab-skip { position:absolute; left:16px; top:-80px; background:var(--surface); padding:10px 16px; z-index:5; }
+.lab-skip:focus { top:10px; }
+@media(max-width:1260px) { .lab-site-header { margin-inline:28px; } }
+@media(max-width:520px) { .lab-site-header { margin-inline:12px; } .lab-site-tabs a { padding:9px 11px; font-size:.9rem; } }
+@media print { .lab-site-header { display:none; } }
+'''
+    page = f'''<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="34 interactive concepts in orbital mechanics, look angles, spacecraft systems, waves, RF links and antennas.">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="{CSP}">
+<title>Course Lab | Orbital HW</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/course-lab.css">
+<script src="../assets/course-lab.js" defer></script>
+</head><body>
+<a class="lab-skip" href="#course-lab">Skip to the course lab</a>
+<div class="lab-site-header"><nav class="lab-site-tabs" aria-label="Learning tools"><a data-site-view="orbit" href="../">Orbit</a><a data-site-view="solar" href="../solar/">Solar Components</a><a data-site-view="lab" href="./" aria-current="page">Course Lab</a></nav></div>
+{markup}
+<noscript><p>Enable JavaScript to use the interactive controls.</p></noscript>
+</body></html>'''
+    return page, css, js
 
 
 def learning_layout(orbit, solar):
@@ -133,6 +189,7 @@ def build():
     assets.mkdir(parents=True, exist_ok=True)
     (dest / 'solar').mkdir(exist_ok=True)
     (dest / 'admin').mkdir(exist_ok=True)
+    (dest / 'lab').mkdir(exist_ok=True)
     orbit_raw = (ROOT / 'src/orbit.html').read_text()
     solar_raw = (ROOT / 'src/solar-acceleration-visualizer.html').read_text()
     orbit, orbit_css, orbit_js = extract_document(orbit_raw, 'orbit')
@@ -203,15 +260,19 @@ def build():
         write_generated(assets / f'{name}.js', js)
         write_generated(dest / ('index.html' if name == 'orbit' else 'solar/index.html'), shell(name, body))
     write_generated(dest / 'admin/index.html', shell('orbit', admin_orbit, admin=True))
+    lab, lab_css, lab_js = course_lab((ROOT / 'src/course-lab.html').read_text())
+    write_generated(dest / 'lab/index.html', lab)
+    write_generated(assets / 'course-lab.css', lab_css)
+    write_generated(assets / 'course-lab.js', lab_js)
     for name in ['site.css', 'site.js', 'sun-view.js', 'favicon.svg', 'orbit-runtime.css']:
         shutil.copyfile(ROOT / 'src' / name, assets / name)
     (dest / '_headers').write_text('/*\n  Content-Security-Policy: ' + CSP + "; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-cache\n")
     provenance = json.loads((ROOT / 'src/provenance.json').read_text())
     provenance['version'] = (ROOT / 'VERSION').read_text().strip()
-    for name in ['orbit.html', 'solar-acceleration-visualizer.html']:
+    for name in ['orbit.html', 'solar-acceleration-visualizer.html', 'course-lab.html']:
         provenance['source_sha256'][name] = hashlib.sha256((ROOT / 'src' / name).read_bytes()).hexdigest()
     (dest / 'source-info.json').write_text(json.dumps(provenance, indent=2) + '\n')
-    print('Built public orbit, solar, and admin walkthrough pages; all assets are local.')
+    print('Built public orbit, solar, course lab, and admin walkthrough pages; all assets are local.')
 
 
 if __name__ == '__main__':
