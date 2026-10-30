@@ -25,7 +25,7 @@ async function check(name, body) {
 }
 
 async function ready() {
-  await page.waitForFunction(() => window.CourseLab?.modules.length === 34);
+  await page.waitForFunction(() => window.CourseLab?.modules.length === 50);
   assert.equal(await page.locator('#figure.error').count(), 0);
 }
 
@@ -70,15 +70,15 @@ try {
     await noInlineStyles();
   });
 
-  await check('All 34 modules and 79 mathematical anchors pass', async () => {
+  await check('All 50 modules and 114 mathematical anchors pass', async () => {
     const result = await page.evaluate(() => ({
       modules: CourseLab.modules.length,
       ids: CourseLab.modules.map(module => module.id),
       checks: CourseLab.checks(),
     }));
-    assert.equal(result.modules, 34);
-    assert.equal(new Set(result.ids).size, 34);
-    assert.equal(result.checks.length, 79);
+    assert.equal(result.modules, 50);
+    assert.equal(new Set(result.ids).size, 50);
+    assert.equal(result.checks.length, 114);
     assert.deepEqual(result.checks.filter(check => !check.pass), []);
     return { modules: result.modules, mathematicalChecks: result.checks.length };
   });
@@ -103,7 +103,7 @@ try {
       }
       return { states, failures };
     });
-    assert.equal(result.states, 305);
+    assert.equal(result.states, 420);
     assert.deepEqual(result.failures, []);
     return result;
   });
@@ -142,7 +142,7 @@ try {
   });
 
   await check('Subject tabs and keyboard concept selection work', async () => {
-    for (const group of ['Orbits', 'Systems', 'Waves', 'RF', 'Antennas']) {
+    for (const group of ['Orbits', 'Systems', 'Waves', 'RF', 'Antennas', 'Navigation', 'Digital']) {
       await page.locator(`#subject-${group}`).click();
       assert.equal(await page.locator(`#subject-${group}`).getAttribute('aria-selected'), 'true');
     }
@@ -181,7 +181,7 @@ try {
       await page.emulateMedia({ colorScheme: scheme });
       for (const width of [320, 390, 1440]) {
         await page.setViewportSize({ width, height: 1000 });
-        for (const id of ['look-triangle', 'double-curl', 'link-budget', 'array-multiplication']) {
+        for (const id of ['look-triangle', 'double-curl', 'link-budget', 'array-multiplication', 'planar-array', 'array-footprint', 'gnss-geometry', 'pn-correlation', 'sampling-alias', 'nyquist-pulse', 'iq-constellation', 'amplifier-backoff']) {
           await page.evaluate(id => CourseLab.select(id), id);
           const result = await page.evaluate(() => ({
             documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth,
@@ -192,6 +192,10 @@ try {
             `${id} ${width}px ${scheme}: body overflow`);
           await noInlineStyles();
           checked.push({ id, width, scheme });
+          if (['planar-array', 'array-footprint', 'gnss-geometry', 'pn-correlation', 'sampling-alias', 'nyquist-pulse', 'iq-constellation', 'amplifier-backoff'].includes(id)
+            && [390, 1440].includes(width) && scheme === 'light') {
+            await page.screenshot({ path: path.join(output, `${id}-${width}-${scheme}.png`), fullPage: true });
+          }
         }
       }
     }
@@ -199,6 +203,53 @@ try {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.screenshot({ path: path.join(output, 'course-lab-desktop.png'), fullPage: true });
     return { combinations: checked.length };
+  });
+
+  await check('New constellation, pulse and geometry extremes preserve their visible data', async () => {
+    const examples = [
+      { id: 'iq-constellation', values: { m: 64, noise: .5 } },
+      { id: 'nyquist-pulse', values: { rolloff: 0, offset: .5 } },
+      { id: 'gnss-geometry', values: { spread: 20, sigma: 10 } },
+      { id: 'pn-correlation', values: { delay: 14, trial: 0, noise: 2, rate: .5 } },
+      { id: 'amplifier-backoff', values: { kind: 2, ibo: 0 } },
+    ];
+    const checked = [];
+    for (const example of examples) {
+      await page.evaluate(({ id, values }) => {
+        CourseLab.select(id);
+        for (const [key, value] of Object.entries(values)) {
+          const input = document.getElementById(`input-${key}`);
+          input.value = String(value);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }, example);
+      assert.deepEqual(await page.evaluate(id => CourseLab.values[id], example.id),
+        await page.evaluate(({ id, values }) => ({ ...Object.fromEntries(CourseLab.modules.find(module => module.id === id).controls.map(control => [control.id, control.value])), ...values }), example));
+      await noInlineStyles();
+      const labelsOutside = await page.locator('#figure svg').evaluateAll(svgs => svgs.flatMap(svg => {
+        const view = svg.viewBox.baseVal;
+        return Array.from(svg.querySelectorAll('text')).filter(text => {
+          const b = text.getBBox(), transform = svg.getCTM().inverse().multiply(text.getCTM());
+          return [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]]
+            .some(([x, y]) => { const p = new DOMPoint(x, y).matrixTransform(transform);
+              return p.x < -.5 || p.y < -.5 || p.x > view.width + .5 || p.y > view.height + .5; });
+        }).map(text => text.textContent);
+      }));
+      assert.deepEqual(labelsOutside, [], `${example.id}: SVG label outside viewBox`);
+      assert.equal(await page.locator('#figure.error').count(), 0);
+      if (example.id === 'iq-constellation') {
+        const points = await page.locator('#figure svg circle').evaluateAll(elements => elements.map(el => ({
+          x: Number(el.getAttribute('cx')), y: Number(el.getAttribute('cy')), r: Number(el.getAttribute('r')),
+        })));
+        assert.equal(points.filter(p => p.r === 2).length, 48, 'All received samples remain visible');
+        assert.ok(points.every(p => p.x - p.r >= 140 && p.x + p.r <= 480 && p.y - p.r >= 55 && p.y + p.r <= 395));
+      }
+      await page.screenshot({ path: path.join(output, `${example.id}-extreme.png`), fullPage: true });
+      checked.push(example.id);
+    }
+    assert.deepEqual(await page.evaluate(() => window.labCspViolations), []);
+    return { examples: checked };
   });
 
   await check('Public navigation links to the lab without exposing admin walkthrough', async () => {

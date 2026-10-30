@@ -115,6 +115,11 @@ def course_lab(source):
   return 'Supplied course notes and guided reading';
 }
 const groups=[""")
+    js = replace_once(js, "const groups=[", (ROOT / 'src/course-update.js').read_text() + '\nconst groups=[')
+    js = replace_once(js, "['Antennas','Antennas']];", "['Antennas','Antennas'],['Navigation','Navigation'],['Digital','Digital signals']];")
+    js = replace_once(js, "function sourceLabel(source) {", "function sourceLabel(source) {\n  if (source.startsWith('Course: ')) return source.slice(8);")
+    js = replace_once(js, 'Course material through October 27, 2026', 'Class through October 29, 2026; assigned digital review')
+    js = replace_once(js, 'This explicitly supplied uniform-array toy model extends the introductory pattern-multiplication picture, not a claim that the general array definition has already been taught.', 'This uniform identical-element model illustrates the general array factor defined in the October 29 lecture.')
     css += '''
 .legend .legend-key { display:inline-block; width:22px; min-width:22px; height:6px; flex:none; }
 .lab-site-header { max-width:1204px; margin:0 auto; padding:18px 0 0; }
@@ -131,7 +136,7 @@ const groups=[""")
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="34 interactive concepts in orbital mechanics, look angles, spacecraft systems, waves, RF links and antennas.">
+<meta name="description" content="50 interactive concepts in orbital mechanics, arrays, navigation, digital signals, waves and RF links.">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="{CSP}">
 <title>Course Lab | Orbital HW</title>
@@ -269,7 +274,7 @@ def build():
     (dest / '_headers').write_text('/*\n  Content-Security-Policy: ' + CSP + "; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: no-referrer\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Cache-Control: no-cache\n")
     provenance = json.loads((ROOT / 'src/provenance.json').read_text())
     provenance['version'] = (ROOT / 'VERSION').read_text().strip()
-    for name in ['orbit.html', 'solar-acceleration-visualizer.html', 'course-lab.html']:
+    for name in ['orbit.html', 'solar-acceleration-visualizer.html', 'course-lab.html', 'course-update.js']:
         provenance['source_sha256'][name] = hashlib.sha256((ROOT / 'src' / name).read_bytes()).hexdigest()
     (dest / 'source-info.json').write_text(json.dumps(provenance, indent=2) + '\n')
     print('Built public orbit, solar, course lab, and admin walkthrough pages; all assets are local.')

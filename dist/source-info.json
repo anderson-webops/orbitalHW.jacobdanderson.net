@@ -1,12 +1,13 @@
 {
   "site": "orbitalHW.jacobdanderson.net",
-  "scope": "Browser-only teaching tools and 34 interactive course concepts. No optimized homework solutions or personal submissions.",
+  "scope": "Browser-only teaching tools and 50 interactive course concepts. No optimized homework solutions or personal submissions.",
   "structure": "Dependency-free static build following the local Liar's Dice site convention; Vitesse Lite informs external assets, CSP and validation.",
   "template_reference": "Vitesse Lite local revision 39e8214b382be4f308a6f5eee068c295e42749ec",
   "inputs": [
     "Previously created Orbital Physics and Code visualization",
     "User-provided solar-acceleration-visualizer.html",
-    "ECE 6390 Interactive Course Lab, validated 2026-10-29"
+    "ECE 6390 Interactive Course Lab, validated 2026-10-29",
+    "Original array, navigation and digital-signal experiments, validated 2026-10-30"
   ],
   "adaptations": [
     "Shared navigation and layout",
@@ -20,12 +21,14 @@
     "Space-fixed Sun overview and enlarged Earth neighborhood reuse the existing trajectory and prescribed solar push direction; diagrams are not to scale and do not change the integrator",
     "Course Lab at /lab/ with subject and concept tabs, preserved equations and new illustrative values",
     "Course Lab scripts and styles externalized; runtime SVG colors use presentation attributes to preserve strict CSP",
-    "Course Lab source labels show course topics instead of internal authoring paths"
+    "Course Lab source labels show course topics instead of internal authoring paths",
+    "Sixteen original interactive experiments for array phase and footprints, GNSS geometry and timing, sampling, quantization, compression, modulation and amplifier backoff"
   ],
   "source_sha256": {
     "orbit.html": "798f06231e9148daeb3e31c972de0932f368b6f662ee173b46cf9aad6857721d",
     "solar-acceleration-visualizer.html": "8f2b49f1315fde5973ff1bb87cadf40900ed27e94f9ea2326c11ff8764ce5cea",
-    "course-lab.html": "cbbd184f816b1ad9a84e51b536e5b515eb0ccab23c0db1a55b4230c75318c1a8"
+    "course-lab.html": "cbbd184f816b1ad9a84e51b536e5b515eb0ccab23c0db1a55b4230c75318c1a8",
+    "course-update.js": "2ea4272433d578b207b9a3e6ce0cfba0fa53772e4cdbf1b9073db4ff618e1722"
   },
-  "version": "0.4.0"
+  "version": "0.5.0"
 }
